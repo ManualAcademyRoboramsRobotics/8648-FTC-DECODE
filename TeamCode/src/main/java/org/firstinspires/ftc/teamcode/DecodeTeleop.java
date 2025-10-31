@@ -96,7 +96,8 @@ public class DecodeTeleop extends DecodeControl {
         /*
          * Show the state and motor powers
          */
-        telemetry.addData("State", leftLauncherState);
+        telemetry.addData("Left State", leftLauncherState);
+        telemetry.addData("Right State", rightLauncherState);
         telemetry.addData("launch distance", launcherDistance);
         telemetry.addData("launcher velocity", launcherVelocity);
         telemetry.addData("Left Launcher Velocity", Math.abs(leftLauncher.getVelocity()));

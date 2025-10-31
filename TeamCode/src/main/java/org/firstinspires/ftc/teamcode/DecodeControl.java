@@ -8,8 +8,9 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.util.TaskCallbackTimer;
+
 import java.util.Timer;
-import java.util.TimerTask;
 
 public abstract class DecodeControl extends OpMode {
 
@@ -77,8 +78,6 @@ public abstract class DecodeControl extends OpMode {
     // Control Objects
     protected MecanumDrive mecanumDrive = null;
     protected Timer feederTimer = null;
-    protected TimerTask leftFeedStopTask = null;
-    protected TimerTask rightFeedStopTask = null;
     protected PIDFCoefficients feederPIDFCoefficients = null;
 
 
@@ -137,19 +136,6 @@ public abstract class DecodeControl extends OpMode {
 
         // Set up timer tasks so we don't forget to turn off the feeder
         feederTimer = new Timer();
-        leftFeedStopTask = new TimerTask() {
-            @Override
-            public void run() {
-                leftLauncherFinishFeed();
-            }
-        };
-
-        rightFeedStopTask = new TimerTask() {
-            @Override
-            public void run() {
-                rightLauncherFinishFeed();
-            }
-        };
 
         // Initialize mecanum drive
         mecanumDrive = new MecanumDrive(leftFrontDrive, leftBackDrive, rightFrontDrive, rightBackDrive);
@@ -236,7 +222,7 @@ public abstract class DecodeControl extends OpMode {
     private void leftLauncherStartFeed() {
         leftFeeder.setPower(FULL_SPEED);
         leftLauncherState = LaunchState.LAUNCHING;
-        feederTimer.schedule(leftFeedStopTask, FEED_TIME_MS);
+        feederTimer.schedule(new TaskCallbackTimer(this::leftLauncherFinishFeed), FEED_TIME_MS);
     }
 
     private void leftLauncherFinishFeed() {
@@ -247,7 +233,7 @@ public abstract class DecodeControl extends OpMode {
     private void rightLauncherStartFeed() {
         rightFeeder.setPower(FULL_SPEED);
         rightLauncherState = LaunchState.LAUNCHING;
-        feederTimer.schedule(rightFeedStopTask, FEED_TIME_MS);
+        feederTimer.schedule(new TaskCallbackTimer(this::rightLauncherFinishFeed), FEED_TIME_MS);
     }
 
     private void rightLauncherFinishFeed() {
@@ -260,8 +246,8 @@ public abstract class DecodeControl extends OpMode {
             case OFF:
             case IDLE:
                 if (shotRequested) {
+                    launcherSpinUp();
                     leftLauncherState = LaunchState.SPIN_UP;
-                    rightLauncherState = LaunchState.IDLE;
                 }
                 break;
             case SPIN_UP:
@@ -281,12 +267,11 @@ public abstract class DecodeControl extends OpMode {
             case OFF:
             case IDLE:
                 if (shotRequested) {
+                    launcherSpinUp();
                     rightLauncherState = LaunchState.SPIN_UP;
-                    leftLauncherState = LaunchState.IDLE;
                 }
                 break;
             case SPIN_UP:
-                launcherSpinUp();
                 if (Math.abs(rightLauncher.getVelocity()) > (launcherVelocity - ALLOWED_VELOCITY_DIVERSION)) {
                     rightLauncherState = LaunchState.LAUNCH;
                 }

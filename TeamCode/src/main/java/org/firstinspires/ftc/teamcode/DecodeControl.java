@@ -1,14 +1,17 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
-public abstract class DecodeControl extends MecanumDrive {
+import java.util.Timer;
+import java.util.TimerTask;
+
+public abstract class DecodeControl extends OpMode {
 
     //////////////////////////////////////////////////////////////
     // Constants
@@ -16,7 +19,7 @@ public abstract class DecodeControl extends MecanumDrive {
     final double STOP_SPEED = 0.0; //We send this power to the servos when we want them to stop.
     final double FULL_SPEED = 1.0;
 
-    final double FEED_TIME_SECONDS = 0.80; //The feeder servos run this long when a shot is requested.
+    final long FEED_TIME_MS = 800; //The feeder servos run this long when a shot is requested.
 
     final double  LAUNCHER_CLOSE_TARGET_VELOCITY = 1500;
     final double LAUNCHER_FAR_TARGET_VELOCITY = 1700;
@@ -59,6 +62,10 @@ public abstract class DecodeControl extends MecanumDrive {
     //////////////////////////////////////////////////////////////
 
     // Control Components
+    protected DcMotorEx leftFrontDrive = null;
+    protected DcMotorEx leftBackDrive = null;
+    protected DcMotorEx rightFrontDrive = null;
+    protected DcMotorEx rightBackDrive = null;
     protected DcMotorEx intake = null;
     protected DcMotorEx leftLauncher = null;
     protected DcMotorEx rightLauncher = null;
@@ -68,7 +75,10 @@ public abstract class DecodeControl extends MecanumDrive {
 
 
     // Control Objects
-    protected ElapsedTime feederTimer = null;
+    protected MecanumDrive mecanumDrive = null;
+    protected Timer feederTimer = null;
+    protected TimerTask leftFeedStopTask = null;
+    protected TimerTask rightFeedStopTask = null;
     protected PIDFCoefficients feederPIDFCoefficients = null;
 
 
@@ -83,11 +93,12 @@ public abstract class DecodeControl extends MecanumDrive {
 
     @Override
     public void init() {
-        super.init();
-
-        feederTimer = new ElapsedTime();
         feederPIDFCoefficients = new PIDFCoefficients(300, 0, 0, 10);
 
+        leftFrontDrive = hardwareMap.get(DcMotorEx.class, "lfd");
+        leftBackDrive = hardwareMap.get(DcMotorEx.class, "lbd");
+        rightFrontDrive = hardwareMap.get(DcMotorEx.class, "rfd");
+        rightBackDrive = hardwareMap.get(DcMotorEx.class, "rbd");
         leftLauncher = hardwareMap.get(DcMotorEx.class, "ll");
         rightLauncher = hardwareMap.get(DcMotorEx.class, "rl");
         intake = hardwareMap.get(DcMotorEx.class, "i");
@@ -95,10 +106,19 @@ public abstract class DecodeControl extends MecanumDrive {
         rightFeeder = hardwareMap.get(CRServo.class, "rf");
         diverter = hardwareMap.get(Servo.class, "d");
 
+        leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftLauncher.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightLauncher.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        //Initial Directions
+        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
+        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
         leftLauncher.setDirection(DcMotorSimple.Direction.REVERSE);
         rightLauncher.setDirection(DcMotorSimple.Direction.FORWARD);
         intake.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -114,6 +134,25 @@ public abstract class DecodeControl extends MecanumDrive {
         rightFeeder.setPower(STOP_SPEED);
 
         diverter.setPosition(RIGHT_POSITION);
+
+        // Set up timer tasks so we don't forget to turn off the feeder
+        feederTimer = new Timer();
+        leftFeedStopTask = new TimerTask() {
+            @Override
+            public void run() {
+                leftLauncherFinishFeed();
+            }
+        };
+
+        rightFeedStopTask = new TimerTask() {
+            @Override
+            public void run() {
+                rightLauncherFinishFeed();
+            }
+        };
+
+        // Initialize mecanum drive
+        mecanumDrive = new MecanumDrive(leftFrontDrive, leftBackDrive, rightFrontDrive, rightBackDrive);
     }
 
     protected void launcherSpinUp() {
@@ -194,12 +233,26 @@ public abstract class DecodeControl extends MecanumDrive {
         }
     }
 
-    private void feedRightLauncher(){
-
+    private void leftLauncherStartFeed() {
+        leftFeeder.setPower(FULL_SPEED);
+        leftLauncherState = LaunchState.LAUNCHING;
+        feederTimer.schedule(leftFeedStopTask, FEED_TIME_MS);
     }
 
-    private void feedLeftLauncher(){
+    private void leftLauncherFinishFeed() {
+        leftFeeder.setPower(STOP_SPEED);
+        leftLauncherState = LaunchState.IDLE;
+    }
 
+    private void rightLauncherStartFeed() {
+        rightFeeder.setPower(FULL_SPEED);
+        rightLauncherState = LaunchState.LAUNCHING;
+        feederTimer.schedule(rightFeedStopTask, FEED_TIME_MS);
+    }
+
+    private void rightLauncherFinishFeed() {
+        rightFeeder.setPower(STOP_SPEED);
+        rightLauncherState = LaunchState.IDLE;
     }
 
     void launchLeft(boolean shotRequested) {
@@ -218,15 +271,7 @@ public abstract class DecodeControl extends MecanumDrive {
                 }
                 break;
             case LAUNCH:
-                leftFeeder.setPower(FULL_SPEED);
-                feederTimer.reset();
-                leftLauncherState = LaunchState.LAUNCHING;
-                break;
-            case LAUNCHING:
-                if (feederTimer.seconds() > FEED_TIME_SECONDS) {
-                    leftLauncherState = LaunchState.IDLE;
-                    leftFeeder.setPower(STOP_SPEED);
-                }
+                leftLauncherStartFeed();
                 break;
         }
     }
@@ -247,15 +292,7 @@ public abstract class DecodeControl extends MecanumDrive {
                 }
                 break;
             case LAUNCH:
-                rightFeeder.setPower(FULL_SPEED);
-                feederTimer.reset();
-                rightLauncherState = LaunchState.LAUNCHING;
-                break;
-            case LAUNCHING:
-                if (feederTimer.seconds() > FEED_TIME_SECONDS) {
-                    rightLauncherState = LaunchState.IDLE;
-                    rightFeeder.setPower(STOP_SPEED);
-                }
+                rightLauncherStartFeed();
                 break;
         }
     }

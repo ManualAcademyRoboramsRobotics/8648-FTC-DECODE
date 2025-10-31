@@ -1,11 +1,8 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
-public abstract class MecanumDrive extends OpMode {
+public class MecanumDrive {
 
     protected DcMotorEx leftFrontDrive = null;
     protected DcMotorEx leftBackDrive = null;
@@ -18,23 +15,11 @@ public abstract class MecanumDrive extends OpMode {
     double rightFrontPower = 0;
     double rightBackPower = 0;
 
-    @Override
-    public void init() {
-        leftFrontDrive = hardwareMap.get(DcMotorEx.class, "lfd");
-        leftBackDrive = hardwareMap.get(DcMotorEx.class, "lbd");
-        rightFrontDrive = hardwareMap.get(DcMotorEx.class, "rfd");
-        rightBackDrive = hardwareMap.get(DcMotorEx.class, "rbd");
-
-        leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE)
-
-        //Initial Directions
-        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
-        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
+    MecanumDrive(DcMotorEx leftFrontMotor, DcMotorEx leftBackMotor, DcMotorEx rightFrontMotor, DcMotorEx rightBackMotor) {
+        leftFrontDrive = leftFrontMotor;
+        leftBackDrive = leftBackMotor;
+        rightFrontDrive = rightFrontMotor;
+        rightBackDrive = rightBackMotor;
     }
 
     public void drive(double y, double x, double rx) {

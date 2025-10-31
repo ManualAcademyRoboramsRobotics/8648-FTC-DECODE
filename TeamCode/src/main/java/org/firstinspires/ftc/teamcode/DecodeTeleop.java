@@ -30,7 +30,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
  * 2025-2026 FIRST® Tech Challenge season DECODE™!
  */
 
-@TeleOp(name = "DECODE Ri3D", group = "StarterBot")
+@TeleOp(name = "DECODE Teleop")
 //@Disabled
 public class DecodeTeleop extends DecodeControl {
 
@@ -68,7 +68,7 @@ public class DecodeTeleop extends DecodeControl {
      */
     @Override
     public void loop() {
-        drive(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
+        mecanumDrive.drive(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
 
         if (gamepad1.y) {
             launcherSpinUp();

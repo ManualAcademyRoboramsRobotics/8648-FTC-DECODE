@@ -26,10 +26,10 @@ public abstract class DecodeControl extends OpMode {
     final double LAUNCHER_FAR_TARGET_VELOCITY = 1700;
     final double ALLOWED_VELOCITY_DIVERSION = 100;
 
-//    final double LEFT_POSITION = 0.348;
-    final double LEFT_POSITION = 0.555;
-//    final double RIGHT_POSITION = 0.310;
-    final double RIGHT_POSITION = 0.08;
+    final double LEFT_POSITION = 0.348;
+//    final double LEFT_POSITION = 0.555;
+    final double RIGHT_POSITION = 0.310;
+//    final double RIGHT_POSITION = 0.08;
 
 
     //////////////////////////////////////////////////////////////

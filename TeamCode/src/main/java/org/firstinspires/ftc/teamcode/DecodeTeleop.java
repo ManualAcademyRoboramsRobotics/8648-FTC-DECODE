@@ -34,11 +34,9 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 //@Disabled
 public class DecodeTeleop extends DecodeControl {
 
-
-    double requestedVelocity = 2100;
-
-    double launcherTarget = requestedVelocity; //These variables allow
-    double launcherMin = requestedVelocity - 100;
+    double requestedVelocity = 1500;
+    final double MAX_REQUESTED_VELOCITY = 2000;
+    final double MIN_REQUESTED_VELOCITY = 1000;
 
     /*
      * Code to run ONCE when the driver hits INIT

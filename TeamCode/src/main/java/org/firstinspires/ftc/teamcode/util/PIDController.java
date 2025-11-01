@@ -12,14 +12,14 @@ public class PIDController {
     private double kI;
     private double kD;
 
-    private double iRunning;
+    private double integral;
 
     public PIDController(PIDCoefficients Coefficients) {
         kP = Coefficients.p;
         kI = Coefficients.i;
         kD = Coefficients.d;
 
-        iRunning = 0;
+        integral = 0;
         previousError = 0;
 
         timer = new ElapsedTime();
@@ -37,7 +37,7 @@ public class PIDController {
 
         double p = kP * currentError;
         double i = kI * (currentError * (elapsedTime));
-        iRunning += i;
+        integral += i;
 
         //    if i > max_i:
         //    i = max_i
@@ -48,6 +48,6 @@ public class PIDController {
 
         previousError = currentError;
 
-        return p + iRunning + d;
+        return p + integral + d;
     }
 }

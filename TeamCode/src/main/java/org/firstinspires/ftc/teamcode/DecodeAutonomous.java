@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -15,20 +16,24 @@ import org.firstinspires.ftc.teamcode.util.PIDController;
 
 @Autonomous (name = "Decode Auto")
 public class DecodeAutonomous extends DecodeControl {
+    private FtcDashboard dashboard = null;
     private GoBildaPinpointDriver pinpointDriver = null;
     private PIDController xPIDControl = null;
     private PIDController yPIDControl = null;
     private PIDController hPIDControl = null;
+    private PIDCoefficients hCoefficents = new PIDCoefficients(Constants.Kp_Heading, Constants.Ki_Heading, Constants.Kd_Heading);
+    private PIDCoefficients lCoefficents = new PIDCoefficients(Constants.Kp_Lateral, Constants.Ki_Lateral, Constants.Kd_Lateral);
 
-    final PIDCoefficients Coefficients = new PIDCoefficients(0.2,0,0);
+    //final PIDCoefficients Coefficients = new PIDCoefficients(0.2,0,0);
 
     @Override
     public void init() {
         super.init();
+        dashboard = FtcDashboard.getInstance();
 
-        xPIDControl = new PIDController(Coefficients);
-        yPIDControl = new PIDController(Coefficients);
-        hPIDControl = new PIDController(Coefficients);
+        xPIDControl = new PIDController(lCoefficents);
+        yPIDControl = new PIDController(lCoefficents);
+        hPIDControl = new PIDController(hCoefficents);
 
         pinpointDriver = hardwareMap.get(GoBildaPinpointDriver.class, "pp");
         pinpointDriver.setOffsets(-3.125, -6.625, DistanceUnit.INCH); //these are tuned for 3110-0002-0001 Product Insight #1

@@ -86,8 +86,17 @@ public class DecodeTeleop extends DecodeControl {
             intakeStateToggle();
         }
 
-        if (gamepad1.dpadUpWasPressed()) {
-            launcherVelocityToggle();
+//        if (gamepad1.dpadUpWasPressed()) {
+//            launcherVelocityToggle();
+//        }
+        if (gamepad1.dpadLeftWasPressed()) {
+            requestedVelocity -= 100;
+            setLauncherVelocity(requestedVelocity);
+        }
+
+        if (gamepad1.dpadRightWasPressed()) {
+            requestedVelocity += 100;
+            setLauncherVelocity(requestedVelocity);
         }
 
         launchLeft(gamepad1.leftBumperWasPressed());
@@ -98,8 +107,8 @@ public class DecodeTeleop extends DecodeControl {
          */
         telemetry.addData("Left State", leftLauncherState);
         telemetry.addData("Right State", rightLauncherState);
-        telemetry.addData("launch distance", launcherDistance);
-        telemetry.addData("launcher velocity", launcherVelocity);
+        telemetry.addData("Requested Velocity", requestedVelocity);
+        telemetry.addData("Launcher Velocity", launcherVelocity);
         telemetry.addData("Left Launcher Velocity", Math.abs(leftLauncher.getVelocity()));
         telemetry.addData("Right Launcher Velocity", Math.abs(leftLauncher.getVelocity()));
         telemetry.addData("Diverter Direction", diverterDirection);

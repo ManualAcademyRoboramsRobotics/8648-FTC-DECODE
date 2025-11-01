@@ -62,7 +62,6 @@ public class DecodeAutonomousTest extends DecodeControl {
         telemetry.addData("X", pinpointDriver.getPosX(DistanceUnit.INCH));
         telemetry.addData("Y", pinpointDriver.getPosY(DistanceUnit.INCH));
         telemetry.addData("Heading", pinpointDriver.getHeading(AngleUnit.DEGREES));
-        telemetry.addData("Position", pinpointDriver.getPosition());
         telemetry.addData("Status", pinpointDriver.getDeviceStatus());
         telemetry.addData("Device Version Number:", pinpointDriver.getDeviceVersion());
         telemetry.addData("Heading Scalar", pinpointDriver.getYawScalar());

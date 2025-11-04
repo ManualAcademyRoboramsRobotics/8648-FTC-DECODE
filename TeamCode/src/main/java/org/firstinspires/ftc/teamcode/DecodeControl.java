@@ -22,8 +22,8 @@ public abstract class DecodeControl extends OpMode {
 
     final long FEED_TIME_MS = 800; //The feeder servos run this long when a shot is requested.
 
-    final double  LAUNCHER_CLOSE_TARGET_VELOCITY = 1500;
-    final double LAUNCHER_FAR_TARGET_VELOCITY = 1700;
+    final double  LAUNCHER_CLOSE_TARGET_VELOCITY = 1600;
+    final double LAUNCHER_FAR_TARGET_VELOCITY = 1800;
     final double ALLOWED_VELOCITY_DIVERSION = 100;
 
     final double LEFT_POSITION = 0.348;
@@ -113,7 +113,7 @@ public abstract class DecodeControl extends OpMode {
         rightLauncher.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        //Initial Directions
+        //Initial Directions 8648
         leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         leftBackDrive.setDirection(DcMotor.Direction.FORWARD);
         rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
@@ -121,6 +121,15 @@ public abstract class DecodeControl extends OpMode {
         leftLauncher.setDirection(DcMotorSimple.Direction.FORWARD);
         rightLauncher.setDirection(DcMotorSimple.Direction.REVERSE);
         intake.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        //Initial Directions 9788
+//        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+//        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
+//        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
+//        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
+//        leftLauncher.setDirection(DcMotorSimple.Direction.REVERSE);
+//        rightLauncher.setDirection(DcMotorSimple.Direction.FORWARD);
+//        intake.setDirection(DcMotorSimple.Direction.FORWARD);
 
         leftLauncher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightLauncher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);

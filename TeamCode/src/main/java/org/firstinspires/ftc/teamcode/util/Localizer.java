@@ -9,10 +9,10 @@ public class Localizer {
     private PIDController yPIDControl;
     private PIDController hPIDControl;
 
-    public Localizer(PIDCoefficients Coefficients) {
-        xPIDControl = new PIDController(Coefficients);
-        yPIDControl = new PIDController(Coefficients);
-        hPIDControl = new PIDController(Coefficients);
+    public Localizer(PIDCoefficients xCoefficients, PIDCoefficients yCoefficients, PIDCoefficients hCoefficients) {
+        xPIDControl = new PIDController(xCoefficients);
+        yPIDControl = new PIDController(yCoefficients);
+        hPIDControl = new PIDController(hCoefficients);
     }
 
     private void moveRobotTo(Pose2D desiredPose) {

@@ -25,9 +25,12 @@ public class PIDController {
         timer = new ElapsedTime();
     }
 
+
     public PIDController(PIDFCoefficients Coefficients) {
 
     }
+
+
 
     public double pidControl(double Current, double Desired) {
         double elapsedTime = timer.time();
@@ -45,6 +48,28 @@ public class PIDController {
         //    i = -max_i
 
         double d = kD * (currentError - previousError) / elapsedTime;
+
+        previousError = currentError;
+
+        return p + integral + d;
+    }
+
+    public double pidControl(double Current, double Desired, double KpUse, double kIUse, double KdUse) {
+        double elapsedTime = timer.time();
+        timer.reset();
+
+        double currentError = Desired - Current;
+
+        double p = KpUse * currentError;
+        double i = kIUse * (currentError * (elapsedTime));
+        integral += i;
+
+        //    if i > max_i:
+        //    i = max_i
+        //    elif i < -max_i:
+        //    i = -max_i
+
+        double d = KdUse * (currentError - previousError) / elapsedTime;
 
         previousError = currentError;
 

@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import android.graphics.drawable.Drawable;
+
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -7,17 +9,21 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.Const;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.sun.tools.javac.code.Attribute;
 
 
 @Autonomous (name = "PID Tuning")
@@ -29,7 +35,7 @@ public class DecodeAutonomousTest extends OpMode {
     protected DcMotorEx rightFrontDrive = null;
     protected DcMotorEx rightBackDrive = null;
     protected MecanumDrive mecanumDrive = null;
-    private IMU imu = null;
+    private GoBildaPinpointDriver pinpoint = null;
     private PIDController xPIDControl = null;
     private PIDController yPIDControl = null;
     private PIDController hPIDControl = null;
@@ -46,15 +52,7 @@ public class DecodeAutonomousTest extends OpMode {
         leftBackDrive = hardwareMap.get(DcMotorEx.class, "lbd");
         rightFrontDrive = hardwareMap.get(DcMotorEx.class, "rfd");
         rightBackDrive = hardwareMap.get(DcMotorEx.class, "rbd");
-        imu = hardwareMap.get(IMU.class, "imu");
-
-        RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.FORWARD;
-        RevHubOrientationOnRobot.UsbFacingDirection  usbDirection  = RevHubOrientationOnRobot.UsbFacingDirection.UP;
-
-        RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(logoDirection, usbDirection);
-
-        imu.initialize(new IMU.Parameters(orientationOnRobot));
-        imu.resetYaw();
+        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pp");
 
         leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -62,12 +60,19 @@ public class DecodeAutonomousTest extends OpMode {
         rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         //Initial Directions
-        leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-        leftBackDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
+        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
+        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
 
         mecanumDrive = new MecanumDrive(leftFrontDrive, leftBackDrive, rightFrontDrive, rightBackDrive);
+
+        pinpoint.initialize();
+        pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+        pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.REVERSED);
+        pinpoint.setOffsets(Constants.X_Offset_in, Constants.Y_Offset_in, DistanceUnit.INCH);
+        //pinpoint.setOffsets(-4.75,1, DistanceUnit.INCH);
+        pinpoint.resetPosAndIMU();
 
         xPIDControl = new PIDController(YCoefficients);
         yPIDControl = new PIDController(YCoefficients);
@@ -79,35 +84,46 @@ public class DecodeAutonomousTest extends OpMode {
 
     @Override
     public void init_loop(){
-        telemetry.addData("y_enc", -leftFrontDrive.getCurrentPosition());
-        telemetry.addData("x_enc", -leftBackDrive.getCurrentPosition());
+        pinpoint.update();
+        telemetry.addData("x_enc", pinpoint.getPosY(DistanceUnit.INCH));
+        telemetry.addData("y_enc", pinpoint.getPosX(DistanceUnit.INCH));
+        telemetry.addData("h_enc", pinpoint.getHeading(AngleUnit.DEGREES));
+        telemetry.addData("x_offset", pinpoint.getXOffset(DistanceUnit.INCH));
+        telemetry.addData("y_offset", pinpoint.getYOffset(DistanceUnit.INCH));
+        telemetry.addData("Position", pinpoint.getPosition());
     }
 
     @Override
     public void loop() {
-        Pose2D DesiredPose = new Pose2D(DistanceUnit.INCH, 15,10, AngleUnit.DEGREES, 45);
-        double y = yPIDControl.pidControl(-leftFrontDrive.getCurrentPosition(), DesiredPose.getX(DistanceUnit.INCH));
-        double x = xPIDControl.pidControl(-leftBackDrive.getCurrentPosition(), DesiredPose.getX(DistanceUnit.INCH));
+        Pose2D DesiredPose = new Pose2D(DistanceUnit.INCH, Constants.X_Desired, Constants.Y_Desired, AngleUnit.DEGREES, Constants.H_Desired);
 
-        YawPitchRollAngles angles = imu.getRobotYawPitchRollAngles();
-        double h = hPIDControl.pidControl(angles.getYaw(AngleUnit.DEGREES), DesiredPose.getHeading(AngleUnit.DEGREES));
+        pinpoint.update();
+        // Pinpoint X and Y are opposite of our reference (Y Forward/Back, X Left/Right)
+        double y = yPIDControl.pidControl(pinpoint.getPosX(DistanceUnit.INCH), DesiredPose.getY(DistanceUnit.INCH), Constants.Kp_Lateral, Constants.Ki_Lateral, Constants.Kd_Lateral);
+        double x = xPIDControl.pidControl(-pinpoint.getPosY(DistanceUnit.INCH), DesiredPose.getX(DistanceUnit.INCH), Constants.Kp_Lateral, Constants.Ki_Lateral, Constants.Kd_Lateral);
+        double h = hPIDControl.pidControl(-pinpoint.getHeading(AngleUnit.DEGREES), DesiredPose.getHeading(AngleUnit.DEGREES), Constants.Kp_Heading, Constants.Ki_Heading, Constants.Kd_Heading);
 
-        mecanumDrive.drive(y, x, h);
+        double cosine = Math.cos(pinpoint.getHeading(AngleUnit.RADIANS));
+        double sine = Math.sin(pinpoint.getHeading(AngleUnit.RADIANS));
 
-        telemetry.addData("X_PID", 0);
-        telemetry.addData("Y_PID", yPIDControl);
+        double yOutput = (y * cosine) - (x * sine);
+        double xOutput = (y * sine) + (x * cosine);
+
+        mecanumDrive.drive(yOutput, xOutput, h);
+
+
+        telemetry.addData("sine", sine);
+        telemetry.addData("cosine", cosine);
+        telemetry.addData("X_PID", x);
+        telemetry.addData("Y_PID", y);
         telemetry.addData("H_PID", h);
-        telemetry.addData("Heading", angles.getYaw(AngleUnit.DEGREES));
-        telemetry.addData("y_enc", -leftFrontDrive.getCurrentPosition());
-        telemetry.addData("x_enc", -leftBackDrive.getCurrentPosition());
-
-//        telemetry.addData("X", pinpointDriver.getPosX(DistanceUnit.INCH));
-//        telemetry.addData("Y", pinpointDriver.getPosY(DistanceUnit.INCH));
-//        telemetry.addData("Heading", pinpointDriver.getHeading(AngleUnit.DEGREES));
-//        telemetry.addData("Position", pinpointDriver.getPosition());
-//        telemetry.addData("Status", pinpointDriver.getDeviceStatus());
-//        telemetry.addData("Device Version Number:", pinpointDriver.getDeviceVersion());
-//        telemetry.addData("Heading Scalar", pinpointDriver.getYawScalar());
+        telemetry.addData("x_enc", pinpoint.getPosY(DistanceUnit.INCH));
+        telemetry.addData("y_enc", pinpoint.getPosX(DistanceUnit.INCH));
+        telemetry.addData("h_enc", pinpoint.getHeading(AngleUnit.DEGREES));
+        telemetry.addData("x_desired", DesiredPose.getX(DistanceUnit.INCH));
+        telemetry.addData("y_desired", DesiredPose.getY(DistanceUnit.INCH));
+        telemetry.addData("h_desired", DesiredPose.getHeading(AngleUnit.DEGREES));
+        telemetry.addData("Position", pinpoint.getPosition());
         telemetry.update();
 
 

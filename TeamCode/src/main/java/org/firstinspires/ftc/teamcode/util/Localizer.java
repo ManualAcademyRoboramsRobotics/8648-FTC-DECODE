@@ -2,15 +2,10 @@ package org.firstinspires.ftc.teamcode.util;
 
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
-import org.firstinspires.ftc.robotcore.external.State;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.MecanumDrive;
-
-import java.util.concurrent.ConcurrentNavigableMap;
-
-import fi.iki.elonen.NanoHTTPD;
 
 public class Localizer {
 
@@ -41,7 +36,7 @@ public class Localizer {
         YawTolerance = yawTolerance;
 
     }
-    private void Localize(Pose2D position)
+    public void localize(Pose2D position)
     {
         CurrentPosition = position;
         if (CurrentState != States.IDLE)
@@ -71,7 +66,13 @@ public class Localizer {
 
         Drive.drive(yOutput, xOutput, h);
 
+        if (inBounds()){
+            CurrentState = States.POSITIONED;
+        }
+    }
 
+    public boolean inPosition(){
+        return CurrentState == States.POSITIONED;
     }
 
     private boolean inBounds() {

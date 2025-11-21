@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.teamcode.util.Localizer;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
 
@@ -24,14 +25,26 @@ public class DecodeAutonomousLocalizer extends OpMode {
     protected DcMotorEx rightBackDrive = null;
     protected MecanumDrive mecanumDrive = null;
     private GoBildaPinpointDriver pinpoint = null;
+    private Localizer localizer = null;
     private PIDController xPIDControl = null;
     private PIDController yPIDControl = null;
     private PIDController hPIDControl = null;
 
 //    final PIDCoefficients YCoefficients = new PIDCoefficients(0.0002,0,0);
-    final PIDCoefficients YCoefficients = new PIDCoefficients(Constants.Kp_Lateral, Constants.Ki_Lateral, Constants.Kd_Lateral);
+    final PIDCoefficients XYCoefficients = new PIDCoefficients(Constants.Kp_Lateral, Constants.Ki_Lateral, Constants.Kd_Lateral);
 //    final PIDCoefficients HCoefficients = new PIDCoefficients(0.01,0,0);
     final PIDCoefficients HCoefficients = new PIDCoefficients(Constants.Kp_Heading, Constants.Ki_Heading, Constants.Kd_Heading);
+
+    Pose2D DesiredPose = null;
+
+    enum pos {
+        pos1,
+        pos2,
+        pos3,
+        pos4
+    }
+
+    private pos goToPos = pos.pos1;
 
     @Override
     public void init() {
@@ -62,10 +75,13 @@ public class DecodeAutonomousLocalizer extends OpMode {
         //pinpoint.setOffsets(-4.75,1, DistanceUnit.INCH);
         pinpoint.resetPosAndIMU();
 
-        xPIDControl = new PIDController(YCoefficients);
-        yPIDControl = new PIDController(YCoefficients);
+        xPIDControl = new PIDController(XYCoefficients);
+        yPIDControl = new PIDController(XYCoefficients);
         hPIDControl = new PIDController(HCoefficients);
 
+        localizer = new Localizer(mecanumDrive, 12, 0.0349066, XYCoefficients, XYCoefficients, HCoefficients );
+
+        DesiredPose = new Pose2D(DistanceUnit.INCH, 0, 20, AngleUnit.DEGREES, Constants.H_Desired);
 
         telemetry.addData("Status", "Odometer Initialized");
         }
@@ -85,27 +101,33 @@ public class DecodeAutonomousLocalizer extends OpMode {
     public void loop() {
         pinpoint.update();
 
-        Pose2D DesiredPose = new Pose2D(DistanceUnit.INCH, Constants.X_Desired, Constants.Y_Desired, AngleUnit.DEGREES, Constants.H_Desired);
         Pose2D CurrentPose = new Pose2D(DistanceUnit.INCH, -pinpoint.getPosY(DistanceUnit.INCH), pinpoint.getPosX(DistanceUnit.INCH), AngleUnit.DEGREES, -pinpoint.getHeading(AngleUnit.DEGREES));
-        // Pinpoint X and Y are opposite of our reference (Y Forward/Back, X Left/Right)
-        double y = yPIDControl.pidControl(pinpoint.getPosX(DistanceUnit.INCH), DesiredPose.getY(DistanceUnit.INCH), Constants.Kp_Lateral, Constants.Ki_Lateral, Constants.Kd_Lateral);
-        double x = xPIDControl.pidControl(-pinpoint.getPosY(DistanceUnit.INCH), DesiredPose.getX(DistanceUnit.INCH), Constants.Kp_Lateral, Constants.Ki_Lateral, Constants.Kd_Lateral);
-        double h = hPIDControl.pidControl(-pinpoint.getHeading(AngleUnit.DEGREES), DesiredPose.getHeading(AngleUnit.DEGREES), Constants.Kp_Heading, Constants.Ki_Heading, Constants.Kd_Heading);
 
-        double cosine = Math.cos(pinpoint.getHeading(AngleUnit.RADIANS));
-        double sine = Math.sin(pinpoint.getHeading(AngleUnit.RADIANS));
+        localizer.setDesiredPosition(DesiredPose);
+        localizer.localize(CurrentPose);
 
-        double yOutput = (y * cosine) - (x * sine);
-        double xOutput = (y * sine) + (x * cosine);
+        if (localizer.inPosition()) {
+            switch (goToPos) {
+                case pos1:
+                    DesiredPose = new Pose2D(DistanceUnit.INCH, 0, 20, AngleUnit.DEGREES, Constants.H_Desired);
+                    goToPos = pos.pos2;
+                    break;
+                case pos2:
+                    DesiredPose = new Pose2D(DistanceUnit.INCH, 20, 0, AngleUnit.DEGREES, Constants.H_Desired);
+                    goToPos = pos.pos3;
+                    break;
+                case pos3:
+                    DesiredPose = new Pose2D(DistanceUnit.INCH, 0, -20, AngleUnit.DEGREES, Constants.H_Desired);
+                    goToPos = pos.pos4;
+                    break;
+                case pos4:
+                    DesiredPose = new Pose2D(DistanceUnit.INCH, -20, 0, AngleUnit.DEGREES, Constants.H_Desired);
+                    goToPos = pos.pos1;
+                    break;
+            }
+        }
 
-        mecanumDrive.drive(yOutput, xOutput, h);
 
-
-        telemetry.addData("sine", sine);
-        telemetry.addData("cosine", cosine);
-        telemetry.addData("X_PID", x);
-        telemetry.addData("Y_PID", y);
-        telemetry.addData("H_PID", h);
         telemetry.addData("x_enc", pinpoint.getPosY(DistanceUnit.INCH));
         telemetry.addData("y_enc", pinpoint.getPosX(DistanceUnit.INCH));
         telemetry.addData("h_enc", pinpoint.getHeading(AngleUnit.DEGREES));

@@ -26,58 +26,22 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.sun.tools.javac.code.Attribute;
 
 
-@Autonomous (name = "PID Tuning")
-public class DecodeAutonomousTest extends OpMode {
-    //http://192.168.43.1:8080/dash
-    private FtcDashboard dashboard = null;
-    protected DcMotorEx leftFrontDrive = null;
-    protected DcMotorEx leftBackDrive = null;
-    protected DcMotorEx rightFrontDrive = null;
-    protected DcMotorEx rightBackDrive = null;
-    protected MecanumDrive mecanumDrive = null;
-    private GoBildaPinpointDriver pinpoint = null;
+@Autonomous (name = "First Autonomous Test")
+public class DecodeAutonomousTest extends BaseOpMode {
     private PIDController xPIDControl = null;
     private PIDController yPIDControl = null;
     private PIDController hPIDControl = null;
 
-//    final PIDCoefficients YCoefficients = new PIDCoefficients(0.0002,0,0);
-    final PIDCoefficients YCoefficients = new PIDCoefficients(Constants.Kp_Lateral, Constants.Ki_Lateral, Constants.Kd_Lateral);
-//    final PIDCoefficients HCoefficients = new PIDCoefficients(0.01,0,0);
-    final PIDCoefficients HCoefficients = new PIDCoefficients(Constants.Kp_Heading, Constants.Ki_Heading, Constants.Kd_Heading);
+    final PIDCoefficients YCoefficients = new PIDCoefficients(Constants.XY_KP, Constants.XY_KI, Constants.XY_KD);
+    final PIDCoefficients XCoefficients = new PIDCoefficients(Constants.XY_KP, Constants.XY_KI, Constants.XY_KD);
+    final PIDCoefficients HCoefficients = new PIDCoefficients(Constants.H_KP, Constants.H_KI, Constants.H_KD);
 
     @Override
     public void init() {
-        dashboard = FtcDashboard.getInstance();
-        leftFrontDrive = hardwareMap.get(DcMotorEx.class, "lfd");
-        leftBackDrive = hardwareMap.get(DcMotorEx.class, "lbd");
-        rightFrontDrive = hardwareMap.get(DcMotorEx.class, "rfd");
-        rightBackDrive = hardwareMap.get(DcMotorEx.class, "rbd");
-        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pp");
-
-        leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        //Initial Directions
-        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
-        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
-
-        mecanumDrive = new MecanumDrive(leftFrontDrive, leftBackDrive, rightFrontDrive, rightBackDrive);
-
-        pinpoint.initialize();
-        pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.REVERSED);
-        pinpoint.setOffsets(Constants.X_Offset_in, Constants.Y_Offset_in, DistanceUnit.INCH);
-        //pinpoint.setOffsets(-4.75,1, DistanceUnit.INCH);
-        pinpoint.resetPosAndIMU();
-
-        xPIDControl = new PIDController(YCoefficients);
+        super.init();
+        xPIDControl = new PIDController(XCoefficients);
         yPIDControl = new PIDController(YCoefficients);
         hPIDControl = new PIDController(HCoefficients);
-
 
         telemetry.addData("Status", "Odometer Initialized");
         }
@@ -98,11 +62,11 @@ public class DecodeAutonomousTest extends OpMode {
         pinpoint.update();
 
         Pose2D DesiredPose = new Pose2D(DistanceUnit.INCH, Constants.X_Desired, Constants.Y_Desired, AngleUnit.DEGREES, Constants.H_Desired);
-        Pose2D CurrentPose = new Pose2D(DistanceUnit.INCH, -pinpoint.getPosY(DistanceUnit.INCH), pinpoint.getPosX(DistanceUnit.INCH), AngleUnit.DEGREES, -pinpoint.getHeading(AngleUnit.DEGREES));
+        // Pose2D CurrentPose = new Pose2D(DistanceUnit.INCH, -pinpoint.getPosY(DistanceUnit.INCH), pinpoint.getPosX(DistanceUnit.INCH), AngleUnit.DEGREES, -pinpoint.getHeading(AngleUnit.DEGREES));
         // Pinpoint X and Y are opposite of our reference (Y Forward/Back, X Left/Right)
-        double y = yPIDControl.pidControl(pinpoint.getPosX(DistanceUnit.INCH), DesiredPose.getY(DistanceUnit.INCH), Constants.Kp_Lateral, Constants.Ki_Lateral, Constants.Kd_Lateral);
-        double x = xPIDControl.pidControl(-pinpoint.getPosY(DistanceUnit.INCH), DesiredPose.getX(DistanceUnit.INCH), Constants.Kp_Lateral, Constants.Ki_Lateral, Constants.Kd_Lateral);
-        double h = hPIDControl.pidControl(-pinpoint.getHeading(AngleUnit.DEGREES), DesiredPose.getHeading(AngleUnit.DEGREES), Constants.Kp_Heading, Constants.Ki_Heading, Constants.Kd_Heading);
+        double y = yPIDControl.pidControl(pinpoint.getPosX(DistanceUnit.INCH), DesiredPose.getY(DistanceUnit.INCH), Constants.XY_KP, Constants.XY_KI, Constants.XY_KD);
+        double x = xPIDControl.pidControl(-pinpoint.getPosY(DistanceUnit.INCH), DesiredPose.getX(DistanceUnit.INCH), Constants.XY_KP, Constants.XY_KI, Constants.XY_KD);
+        double h = hPIDControl.pidControl(-pinpoint.getHeading(AngleUnit.DEGREES), DesiredPose.getHeading(AngleUnit.DEGREES), Constants.H_KP, Constants.H_KI, Constants.H_KD);
 
         double cosine = Math.cos(pinpoint.getHeading(AngleUnit.RADIANS));
         double sine = Math.sin(pinpoint.getHeading(AngleUnit.RADIANS));

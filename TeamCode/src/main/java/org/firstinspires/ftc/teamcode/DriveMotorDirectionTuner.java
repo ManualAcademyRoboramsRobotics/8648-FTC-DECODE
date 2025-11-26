@@ -11,28 +11,28 @@ import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.teamcode.drive.BaseDrive;
 import org.firstinspires.ftc.teamcode.util.Localizer;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
 
-@Autonomous (name = "Localizer Testing")
-public class DecodeAutonomousLocalizer extends BaseOpMode {
+@Autonomous (name = "Drive Motor Direction Tuner")
+public class DriveMotorDirectionTuner extends BaseOpMode {
     Pose2D DesiredPose = null;
 
     enum pos {
         pos1,
-        pos2,
-        pos3,
-        pos4
+        pos2
     }
 
     private pos goToPos = pos.pos1;
 
     @Override
     public void init() {
-        super.init();
         DesiredPose = new Pose2D(DistanceUnit.INCH, 0, 20, AngleUnit.DEGREES, Constants.H_Desired);
-     }
+
+        telemetry.addData("Status", "Odometer Initialized");
+        }
 
     @Override
     public void init_loop(){
@@ -61,15 +61,7 @@ public class DecodeAutonomousLocalizer extends BaseOpMode {
                     goToPos = pos.pos2;
                     break;
                 case pos2:
-                    DesiredPose = new Pose2D(DistanceUnit.INCH, 20, 0, AngleUnit.DEGREES, Constants.H_Desired);
-                    goToPos = pos.pos3;
-                    break;
-                case pos3:
                     DesiredPose = new Pose2D(DistanceUnit.INCH, 0, -20, AngleUnit.DEGREES, Constants.H_Desired);
-                    goToPos = pos.pos4;
-                    break;
-                case pos4:
-                    DesiredPose = new Pose2D(DistanceUnit.INCH, -20, 0, AngleUnit.DEGREES, Constants.H_Desired);
                     goToPos = pos.pos1;
                     break;
             }

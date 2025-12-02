@@ -96,15 +96,20 @@ public class DecodeControl {
         //Initial Directions
         leftLauncher.setDirection(DcMotorSimple.Direction.FORWARD);
         rightLauncher.setDirection(DcMotorSimple.Direction.REVERSE);
-        intake.setDirection(DcMotorSimple.Direction.REVERSE);
+        /////////////////////////////////////////////////////////////////////////////////////////////////
+        // 9788!!!!!
+        intake.setDirection(DcMotorSimple.Direction.FORWARD);
 
+        // 8648!!!!!
+        //intake.setDirection(DcMotorSimple.Direction.REVERSE);
+        /////////////////////////////////////////////////////////////////////////////////////////////////
         leftLauncher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightLauncher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftLauncher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, launcherfeederPIDFCoefficients);
         rightLauncher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, launcherfeederPIDFCoefficients);
 
-        leftFeeder.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightFeeder.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftFeeder.setDirection(DcMotorSimple.Direction.REVERSE);
+        rightFeeder.setDirection(DcMotorSimple.Direction.FORWARD);
         leftFeeder.setPower(STOP_SPEED);
         rightFeeder.setPower(STOP_SPEED);
 

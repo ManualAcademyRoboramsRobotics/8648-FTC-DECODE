@@ -9,7 +9,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.opmode.BaseOpMode;
 
 //@Disabled
-@TeleOp(name = "Drive Motor Direction Debugger")
+@TeleOp(name = "Encoder Offset Debugger")
 public class EncoderOffsetDebugger extends BaseOpMode {
 
     @Override

@@ -63,6 +63,18 @@ public class DecodeTeleop extends BaseOpMode {
 
         if (gamepad1.dpadUpWasPressed()) {
             m_Controls.launcherVelocityToggle();
+            m_Controls.setLauncherVelocity(requestedVelocity);
+        }
+
+        if (gamepad1.dpadLeftWasPressed()) {
+            requestedVelocity -= 100;
+            m_Controls.setLauncherVelocity(requestedVelocity);
+
+        }
+
+        if (gamepad1.dpadRightWasPressed()) {
+            requestedVelocity += 100;
+            m_Controls.setLauncherVelocity(requestedVelocity);
         }
 
         m_Controls.launchLeft(gamepad1.leftBumperWasPressed());

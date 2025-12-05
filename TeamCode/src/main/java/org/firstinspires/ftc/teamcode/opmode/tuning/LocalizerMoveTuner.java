@@ -10,60 +10,34 @@ import org.firstinspires.ftc.teamcode.opmode.BaseOpMode;
 
 
 @Disabled
-@TeleOp(name = "Turning Tuner")
-public class LocalizerTurningTuner extends BaseOpMode {
-    Pose2D DesiredPose;
-
-    enum pos {
-        pos1,
-        pos2,
-        pos3,
-        pos4
-    }
-
-    private pos goToPos;
-
-    final Pose2D Position1 = new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, 0);
-    final Pose2D Position2 = new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, 180);
-    final Pose2D Position3 = new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, 90);
-    final Pose2D Position4 = new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, -90);
-
+@TeleOp(name = "Localizer Move Tuner")
+public class LocalizerMoveTuner extends BaseOpMode {
     @Override
     public void init() {
         super.init();
-        goToPos = pos.pos1;
-        DesiredPose = Position1;
+        m_Localizer.SetDesiredPosition(new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, 0));
+
     }
 
     @Override
     public void loop() {
         m_Pinpoint.update();
-
         Pose2D CurrentPose = new Pose2D(DistanceUnit.INCH, -m_Pinpoint.getPosY(DistanceUnit.INCH), m_Pinpoint.getPosX(DistanceUnit.INCH), AngleUnit.DEGREES, -m_Pinpoint.getHeading(AngleUnit.DEGREES));
 
-        m_Localizer.SetDesiredPosition(DesiredPose);
         UpdateLocalizerParameters();
         m_Localizer.Localize(CurrentPose);
 
-        if (m_Localizer.InPosition()) {
-            switch (goToPos) {
-                case pos1:
-                    DesiredPose = Position2;
-                    goToPos = pos.pos2;
-                    break;
-                case pos2:
-                    DesiredPose = Position3;
-                    goToPos = pos.pos3;
-                    break;
-                case pos3:
-                    DesiredPose = Position4;
-                    goToPos = pos.pos4;
-                    break;
-                case pos4:
-                    DesiredPose = Position1;
-                    goToPos = pos.pos1;
-                    break;
-            }
+        if (gamepad1.dpadRightWasPressed()){
+            m_Localizer.MoveX(5, DistanceUnit.INCH);
+        }
+        if (gamepad1.dpadLeftWasPressed()){
+            m_Localizer.MoveX(-5, DistanceUnit.INCH);
+        }
+        if (gamepad1.dpadUpWasPressed()){
+            m_Localizer.MoveY(5, DistanceUnit.INCH);
+        }
+        if (gamepad1.dpadDownWasPressed()){
+            m_Localizer.MoveY(-5, DistanceUnit.INCH);
         }
 
         telemetry.addData("x_desired", m_Localizer.GetDesiredPosition() == null ? 0 : m_Localizer.GetDesiredPosition().getX(DistanceUnit.INCH));

@@ -9,7 +9,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.opmode.BaseOpMode;
 
 
-//@Disabled
+@Disabled
 @TeleOp(name = "Forward Back Tuner")
 public class LocalizerForwardBackTuner extends BaseOpMode {
     Pose2D DesiredPose;
@@ -21,8 +21,8 @@ public class LocalizerForwardBackTuner extends BaseOpMode {
 
     private pos goToPos;
 
-    final Pose2D Position1 = new Pose2D(DistanceUnit.INCH, 24, 0, AngleUnit.DEGREES, 0);
-    final Pose2D Position2 = new Pose2D(DistanceUnit.INCH, -24, 0, AngleUnit.DEGREES, 0);
+    final Pose2D Position1 = new Pose2D(DistanceUnit.INCH, 0, 24,  AngleUnit.DEGREES, 0);
+    final Pose2D Position2 = new Pose2D(DistanceUnit.INCH, 0, -24, AngleUnit.DEGREES, 0);
 
     @Override
     public void init() {
@@ -54,12 +54,19 @@ public class LocalizerForwardBackTuner extends BaseOpMode {
             }
         }
 
-        telemetry.addData("x_enc", m_Pinpoint.getPosY(DistanceUnit.INCH));
-        telemetry.addData("y_enc", m_Pinpoint.getPosX(DistanceUnit.INCH));
-        telemetry.addData("h_enc", m_Pinpoint.getHeading(AngleUnit.DEGREES));
-        telemetry.addData("x_desired", DesiredPose.getX(DistanceUnit.INCH));
-        telemetry.addData("y_desired", DesiredPose.getY(DistanceUnit.INCH));
-        telemetry.addData("h_desired", DesiredPose.getHeading(AngleUnit.DEGREES));
+        telemetry.addData("x_desired", m_Localizer.GetDesiredPosition() == null ? 0 : m_Localizer.GetDesiredPosition().getX(DistanceUnit.INCH));
+        telemetry.addData("y_desired", m_Localizer.GetDesiredPosition() == null ? 0 : m_Localizer.GetDesiredPosition().getY(DistanceUnit.INCH));
+        telemetry.addData("h_desired", m_Localizer.GetDesiredPosition() == null ? 0 : m_Localizer.GetDesiredPosition().getHeading(AngleUnit.DEGREES));
+        telemetry.addData("x_current", m_Localizer.GetCurrentPosition() == null ? 0 : m_Localizer.GetCurrentPosition().getX(DistanceUnit.INCH));
+        telemetry.addData("y_current", m_Localizer.GetCurrentPosition() == null ? 0 : m_Localizer.GetCurrentPosition().getY(DistanceUnit.INCH));
+        telemetry.addData("h_current", m_Localizer.GetCurrentPosition() == null ? 0 : m_Localizer.GetCurrentPosition().getHeading(AngleUnit.DEGREES));
+        telemetry.addData("in_position", m_Localizer.GetCurrentPosition() == null ? 0 : m_Localizer.InPosition());
+        telemetry.addData("in_bounds", m_Localizer.GetCurrentPosition() == null || m_Localizer.GetDesiredPosition() == null ? 0 : m_Localizer.InBounds());
+        telemetry.addData("xin_bounds", m_Localizer.GetCurrentPosition() == null || m_Localizer.GetDesiredPosition() == null ? 0 : m_Localizer.XInBounds());
+        telemetry.addData("yin_bounds", m_Localizer.GetCurrentPosition() == null || m_Localizer.GetDesiredPosition() == null ? 0 : m_Localizer.YInBounds());
+        telemetry.addData("hin_bounds", m_Localizer.GetCurrentPosition() == null || m_Localizer.GetDesiredPosition() == null ? 0 : m_Localizer.HInBounds());
+        telemetry.addData("localizer_state", m_Localizer.m_CurrentState);
+        telemetry.addData("max_power", m_Localizer.GetMaxPower());
         telemetry.update();
     }
 }

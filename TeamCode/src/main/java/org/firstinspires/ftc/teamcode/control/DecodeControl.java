@@ -25,15 +25,7 @@ public class DecodeControl {
 
     final long FEED_TIME_MS = 800; //The feeder servos run this long when a shot is requested.
 
-    final double  LAUNCHER_CLOSE_TARGET_VELOCITY = 1500;
-    final double LAUNCHER_FAR_TARGET_VELOCITY = 1700;
     final double ALLOWED_VELOCITY_DIVERSION = 100;
-
-//    final double LEFT_POSITION = 0.348;
-    final double LEFT_POSITION = 0.555;
-//    final double RIGHT_POSITION = 0.310;
-    final double RIGHT_POSITION = 0.08;
-
 
     //////////////////////////////////////////////////////////////
     // Enums
@@ -48,17 +40,17 @@ public class DecodeControl {
 
     public enum IntakeState {
         ON,
-        OFF;
+        OFF
     }
 
     public enum DiverterDirection {
         LEFT,
-        RIGHT;
+        RIGHT
     }
 
     public enum LauncherDistance {
         CLOSE,
-        FAR;
+        FAR
     }
 
     //////////////////////////////////////////////////////////////
@@ -71,15 +63,15 @@ public class DecodeControl {
     final Servo diverter;
 
     // Control Objects
-    private Timer feederTimer = null;
+    final Timer feederTimer;
     final PIDFCoefficients launcherfeederPIDFCoefficients = new PIDFCoefficients(ControlConstants.LAUNCHER_KP, ControlConstants.LAUNCHER_KI, ControlConstants.LAUNCHER_KD, ControlConstants.LAUNCHER_KF);
 
     // State Variables
     public LaunchState leftLauncherState = LaunchState.OFF, rightLauncherState = LaunchState.OFF;
-    public DiverterDirection diverterDirection = DiverterDirection.RIGHT;
+    public DiverterDirection diverterDirection = DiverterDirection.LEFT;
     public IntakeState intakeState = IntakeState.OFF;
     public LauncherDistance launcherDistance = LauncherDistance.CLOSE;
-    public double launcherVelocity = LAUNCHER_CLOSE_TARGET_VELOCITY;
+    public double launcherVelocity = ControlConstants.CLOSE_LAUNCH_SPEED;
 
     public DecodeControl(HardwareMap hardwareMap) {
         leftLauncher = hardwareMap.get(DcMotorEx.class, "ll");
@@ -94,14 +86,15 @@ public class DecodeControl {
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         //Initial Directions
-        leftLauncher.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightLauncher.setDirection(DcMotorSimple.Direction.REVERSE);
         /////////////////////////////////////////////////////////////////////////////////////////////////
         // 9788!!!!!
         intake.setDirection(DcMotorSimple.Direction.FORWARD);
-
+        leftLauncher.setDirection(DcMotorSimple.Direction.REVERSE);
+        rightLauncher.setDirection(DcMotorSimple.Direction.FORWARD);
         // 8648!!!!!
-        //intake.setDirection(DcMotorSimple.Direction.REVERSE);
+//        leftLauncher.setDirection(DcMotorSimple.Direction.FORWARD);
+//        rightLauncher.setDirection(DcMotorSimple.Direction.REVERSE);
+//        intake.setDirection(DcMotorSimple.Direction.REVERSE);
         /////////////////////////////////////////////////////////////////////////////////////////////////
         leftLauncher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightLauncher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -113,7 +106,7 @@ public class DecodeControl {
         leftFeeder.setPower(STOP_SPEED);
         rightFeeder.setPower(STOP_SPEED);
 
-        diverter.setPosition(RIGHT_POSITION);
+        diverter.setPosition(ControlConstants.DIVERTER_LEFT);
 
         // Set up timer tasks so we don't forget to turn off the feeder
         feederTimer = new Timer();
@@ -135,12 +128,12 @@ public class DecodeControl {
 
     public void diverterLeft() {
         diverterDirection = DiverterDirection.LEFT;
-        diverter.setPosition(LEFT_POSITION);
+        diverter.setPosition(ControlConstants.DIVERTER_LEFT);
     }
 
     public void diverterRight() {
         diverterDirection = DiverterDirection.RIGHT;
-        diverter.setPosition(RIGHT_POSITION);
+        diverter.setPosition(ControlConstants.DIVERTER_RIGHT);
     }
 
     public void diverterDirectionToggle() {
@@ -179,11 +172,11 @@ public class DecodeControl {
         switch (launcherDistance) {
             case CLOSE:
                 launcherDistance = LauncherDistance.FAR;
-                setLauncherVelocity(LAUNCHER_FAR_TARGET_VELOCITY);
+                setLauncherVelocity(ControlConstants.FAR_LAUNCH_SPEED);
                 break;
             case FAR:
                 launcherDistance = LauncherDistance.CLOSE;
-                setLauncherVelocity(LAUNCHER_CLOSE_TARGET_VELOCITY);
+                setLauncherVelocity(ControlConstants.CLOSE_LAUNCH_SPEED);
                 break;
         }
     }

@@ -1,10 +1,13 @@
 package org.firstinspires.ftc.teamcode.util;
 
+import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.teamcode.constants.DriveConstants;
 import org.firstinspires.ftc.teamcode.drive.MecanumDrive;
 
 import com.acmerobotics.dashboard.config.Config;
@@ -22,7 +25,7 @@ public class Localizer {
 
     private Pose2D m_CurrentPosition, m_DesiredPosition;
 
-    private States m_CurrentState;
+    public States m_CurrentState;
 
     private double m_XYToleranceMM, m_HToleranceRadian;
     private double m_MaxPower;
@@ -41,15 +44,16 @@ public class Localizer {
     public void Localize(Pose2D position)
     {
         m_CurrentPosition = position;
-        if (m_CurrentState != States.IDLE)
-        {
+        if (m_CurrentState != States.IDLE) {
             Drive();
         }
     }
 
-    public void SetDesiredPosition(Pose2D position){
+    public void SetDesiredPosition(Pose2D position) {
         m_DesiredPosition = position;
-        m_CurrentState = States.DRIVING;
+        if (m_CurrentState == States.IDLE || !InBounds()) {
+            m_CurrentState = States.DRIVING;
+        }
     }
 
     public void SetXPIDCoefficients(PIDCoefficients coefficients) {
@@ -80,8 +84,15 @@ public class Localizer {
         m_MaxPower = maxPower;
     }
 
+    public double GetMaxPower() {
+        return m_MaxPower;
+    }
     public Pose2D GetDesiredPosition() {
         return m_DesiredPosition;
+    }
+
+    public Pose2D GetCurrentPosition() {
+        return m_CurrentPosition;
     }
 
     public void MoveY(double distance, DistanceUnit unit) {
@@ -96,21 +107,38 @@ public class Localizer {
         SetDesiredPosition(new Pose2D(DistanceUnit.MM, m_DesiredPosition.getX(DistanceUnit.MM), m_DesiredPosition.getY(DistanceUnit.MM), unit, m_DesiredPosition.getHeading(unit) + angle));
     }
 
+    public static double angleWrap(double angle, AngleUnit unit) {
+        double radians = unit.toRadians(angle);
+
+        while (radians > Math.PI) {
+            radians -= 2 * Math.PI;
+        }
+        while (radians < -Math.PI) {
+            radians += 2 * Math.PI;
+        }
+        return unit.fromUnit(AngleUnit.RADIANS, radians);
+    }
+
     private void Drive() {
         double y = m_YPIDControl.pidControl(m_CurrentPosition.getY(DistanceUnit.INCH), m_DesiredPosition.getY(DistanceUnit.INCH));
         double x = m_XPIDControl.pidControl(m_CurrentPosition.getX(DistanceUnit.INCH), m_DesiredPosition.getX(DistanceUnit.INCH));
-        double h = m_HPIDControl.pidControl(m_CurrentPosition.getHeading(AngleUnit.DEGREES), m_DesiredPosition.getHeading(AngleUnit.DEGREES));
+        double h = m_HPIDControl.pidControl(angleWrap(m_CurrentPosition.getHeading(AngleUnit.DEGREES), AngleUnit.DEGREES), m_DesiredPosition.getHeading(AngleUnit.DEGREES));
 
         double cosine = Math.cos(m_CurrentPosition.getHeading(AngleUnit.RADIANS));
         double sine = Math.sin(m_CurrentPosition.getHeading(AngleUnit.RADIANS));
 
-        double yOutput = (y * cosine) - (x * sine);
-        double xOutput = (y * sine) + (x * cosine);
+//        double yOutput = (y * cosine) - (x * sine);
+//        double xOutput = (y * sine) + (x * cosine);
+        double yOutput = (DriveConstants.COSY * y * cosine) + (DriveConstants.SINX * x * sine);
+        double xOutput = (DriveConstants.SINY * y * sine) + (DriveConstants.COSX * x * cosine);
 
-        m_Drive.Drive(yOutput, xOutput, h);
+        m_Drive.Drive(yOutput, xOutput, h, m_MaxPower);
 
-        if (InBounds()){
+        if (InBounds()) {
             m_CurrentState = States.POSITIONED;
+        }
+        else {
+            m_CurrentState = States.DRIVING;
         }
     }
 
@@ -118,7 +146,7 @@ public class Localizer {
         return m_CurrentState == States.POSITIONED;
     }
 
-    private boolean InBounds() {
+    public boolean InBounds() {
         boolean xInBounds = m_CurrentPosition.getX(DistanceUnit.MM) > (m_DesiredPosition.getX(DistanceUnit.MM) - m_XYToleranceMM) &&
                 m_CurrentPosition.getX(DistanceUnit.MM) < (m_DesiredPosition.getX(DistanceUnit.MM) + m_XYToleranceMM);
         boolean yInBounds = m_CurrentPosition.getY(DistanceUnit.MM) > (m_DesiredPosition.getY(DistanceUnit.MM) - m_XYToleranceMM) &&
@@ -127,5 +155,20 @@ public class Localizer {
                 m_CurrentPosition.getHeading(AngleUnit.RADIANS) < (m_DesiredPosition.getHeading(AngleUnit.RADIANS) + m_HToleranceRadian);
 
         return xInBounds && yInBounds && hInBounds;
+    }
+
+    public boolean XInBounds() {
+        return m_CurrentPosition.getX(DistanceUnit.MM) > (m_DesiredPosition.getX(DistanceUnit.MM) - m_XYToleranceMM) &&
+                m_CurrentPosition.getX(DistanceUnit.MM) < (m_DesiredPosition.getX(DistanceUnit.MM) + m_XYToleranceMM);
+    }
+
+    public boolean YInBounds() {
+        return m_CurrentPosition.getY(DistanceUnit.MM) > (m_DesiredPosition.getY(DistanceUnit.MM) - m_XYToleranceMM) &&
+                m_CurrentPosition.getY(DistanceUnit.MM) < (m_DesiredPosition.getY(DistanceUnit.MM) + m_XYToleranceMM);
+    }
+
+    public boolean HInBounds() {
+        return m_CurrentPosition.getHeading(AngleUnit.RADIANS) > (m_DesiredPosition.getHeading(AngleUnit.RADIANS) - m_HToleranceRadian) &&
+                m_CurrentPosition.getHeading(AngleUnit.RADIANS) < (m_DesiredPosition.getHeading(AngleUnit.RADIANS) + m_HToleranceRadian);
     }
 }

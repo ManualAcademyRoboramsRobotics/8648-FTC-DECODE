@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.opmode.BaseOpMode;
 
-//@Disabled
+@Disabled
 @TeleOp(name = "Drive Motor Direction Debugger")
 public class DriveMotorDirectionDebugger extends BaseOpMode {
 

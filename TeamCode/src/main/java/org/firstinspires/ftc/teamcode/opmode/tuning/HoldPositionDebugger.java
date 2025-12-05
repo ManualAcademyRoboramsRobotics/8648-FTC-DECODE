@@ -6,33 +6,18 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.teamcode.constants.DriveConstants;
 import org.firstinspires.ftc.teamcode.opmode.BaseOpMode;
 
 
 @Disabled
-@TeleOp(name = "Turning Tuner")
-public class LocalizerTurningTuner extends BaseOpMode {
+@TeleOp(name = "Hold Position Debugger")
+public class HoldPositionDebugger extends BaseOpMode {
     Pose2D DesiredPose;
-
-    enum pos {
-        pos1,
-        pos2,
-        pos3,
-        pos4
-    }
-
-    private pos goToPos;
-
-    final Pose2D Position1 = new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, 0);
-    final Pose2D Position2 = new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, 180);
-    final Pose2D Position3 = new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, 90);
-    final Pose2D Position4 = new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, -90);
 
     @Override
     public void init() {
         super.init();
-        goToPos = pos.pos1;
-        DesiredPose = Position1;
     }
 
     @Override
@@ -40,31 +25,11 @@ public class LocalizerTurningTuner extends BaseOpMode {
         m_Pinpoint.update();
 
         Pose2D CurrentPose = new Pose2D(DistanceUnit.INCH, -m_Pinpoint.getPosY(DistanceUnit.INCH), m_Pinpoint.getPosX(DistanceUnit.INCH), AngleUnit.DEGREES, -m_Pinpoint.getHeading(AngleUnit.DEGREES));
+        DesiredPose = new Pose2D(DistanceUnit.INCH, DriveConstants.X_Desired, DriveConstants.Y_Desired, AngleUnit.DEGREES, DriveConstants.H_Desired);
 
         m_Localizer.SetDesiredPosition(DesiredPose);
         UpdateLocalizerParameters();
         m_Localizer.Localize(CurrentPose);
-
-        if (m_Localizer.InPosition()) {
-            switch (goToPos) {
-                case pos1:
-                    DesiredPose = Position2;
-                    goToPos = pos.pos2;
-                    break;
-                case pos2:
-                    DesiredPose = Position3;
-                    goToPos = pos.pos3;
-                    break;
-                case pos3:
-                    DesiredPose = Position4;
-                    goToPos = pos.pos4;
-                    break;
-                case pos4:
-                    DesiredPose = Position1;
-                    goToPos = pos.pos1;
-                    break;
-            }
-        }
 
         telemetry.addData("x_desired", m_Localizer.GetDesiredPosition() == null ? 0 : m_Localizer.GetDesiredPosition().getX(DistanceUnit.INCH));
         telemetry.addData("y_desired", m_Localizer.GetDesiredPosition() == null ? 0 : m_Localizer.GetDesiredPosition().getY(DistanceUnit.INCH));

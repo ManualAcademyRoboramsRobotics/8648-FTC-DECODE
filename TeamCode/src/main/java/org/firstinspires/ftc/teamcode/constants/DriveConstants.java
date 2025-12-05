@@ -9,7 +9,7 @@ public class DriveConstants {
     public static double XY_KI = 0.0;
     public static double XY_KD = 0.0;
 
-    public static double H_KP = 0.01; //0.008 minibot
+    public static double H_KP = 0.015; //0.008 minibot, 0.01 for 8648, 0.015 for 9788
     public static double H_KI = 0.0;
     public static double H_KD = 0.0;
 

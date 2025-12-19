@@ -1,21 +1,174 @@
 package org.firstinspires.ftc.teamcode.util;
 
+import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.teamcode.constants.DriveConstants;
+import org.firstinspires.ftc.teamcode.drive.MecanumDrive;
+
+import com.acmerobotics.dashboard.config.Config;
 
 public class Localizer {
-    private PIDController xPIDControl;
-    private PIDController yPIDControl;
-    private PIDController hPIDControl;
 
-    public Localizer(PIDCoefficients Coefficients) {
-        xPIDControl = new PIDController(Coefficients);
-        yPIDControl = new PIDController(Coefficients);
-        hPIDControl = new PIDController(Coefficients);
+    public enum States{
+        IDLE,
+        DRIVING,
+        POSITIONED
+    }
+    private final PIDController m_XPIDControl, m_YPIDControl, m_HPIDControl;
+
+    private final MecanumDrive m_Drive;
+
+    private Pose2D m_CurrentPosition, m_DesiredPosition;
+
+    public States m_CurrentState;
+
+    private double m_XYToleranceMM, m_HToleranceRadian;
+    private double m_MaxPower;
+
+    public Localizer(MecanumDrive drive, double xyTolerance, DistanceUnit xyToleranceUnit, double hTolerance, AngleUnit hToleranceUnit, PIDCoefficients xCoefficients, PIDCoefficients yCoefficients, PIDCoefficients hCoefficients) {
+        m_XPIDControl = new PIDController(xCoefficients);
+        m_YPIDControl = new PIDController(yCoefficients);
+        m_HPIDControl = new PIDController(hCoefficients);
+        m_Drive = drive;
+        m_MaxPower = 1;
+        m_CurrentState = States.IDLE;
+        m_XYToleranceMM = DistanceUnit.MM.fromUnit(xyToleranceUnit, xyTolerance) ;
+        m_HToleranceRadian = AngleUnit.RADIANS.fromUnit(hToleranceUnit, hTolerance);
     }
 
-    private void moveRobotTo(Pose2D desiredPose) {
+    public void Localize(Pose2D position)
+    {
+        m_CurrentPosition = position;
+        if (m_CurrentState != States.IDLE) {
+            Drive();
+        }
+    }
 
+    public void SetDesiredPosition(Pose2D position) {
+        m_DesiredPosition = position;
+        if (m_CurrentState == States.IDLE || !InBounds()) {
+            m_CurrentState = States.DRIVING;
+        }
+    }
+
+    public void SetXPIDCoefficients(PIDCoefficients coefficients) {
+        m_XPIDControl.SetCoefficients(coefficients);
+    }
+
+    public void SetYPIDCoefficients(PIDCoefficients coefficients) {
+        m_YPIDControl.SetCoefficients(coefficients);
+    }
+
+    public void SetHPIDCoefficients(PIDCoefficients coefficients) {
+        m_HPIDControl.SetCoefficients(coefficients);
+    }
+
+    public void SetXYTolerance(double tolerance, DistanceUnit unit) {
+        m_XYToleranceMM = DistanceUnit.MM.fromUnit(unit, tolerance);
+    }
+
+    public void SetHTolerance(double tolerance, AngleUnit unit) {
+        m_HToleranceRadian = AngleUnit.RADIANS.fromUnit(unit, tolerance);
+    }
+
+    public void SetIdle() {
+        m_CurrentState = States.IDLE;
+    }
+
+    public void SetMaxPower(double maxPower) {
+        m_MaxPower = maxPower;
+    }
+
+    public double GetMaxPower() {
+        return m_MaxPower;
+    }
+    public Pose2D GetDesiredPosition() {
+        return m_DesiredPosition;
+    }
+
+    public Pose2D GetCurrentPosition() {
+        return m_CurrentPosition;
+    }
+
+    public void MoveY(double distance, DistanceUnit unit) {
+        SetDesiredPosition(new Pose2D(unit, m_DesiredPosition.getX(unit), m_DesiredPosition.getY(unit) + distance, AngleUnit.RADIANS, m_DesiredPosition.getHeading(AngleUnit.RADIANS)));
+    }
+
+    public void MoveX(double distance, DistanceUnit unit) {
+        SetDesiredPosition(new Pose2D(unit, m_DesiredPosition.getX(unit) + distance, m_DesiredPosition.getY(unit), AngleUnit.RADIANS, m_DesiredPosition.getHeading(AngleUnit.RADIANS)));
+    }
+
+    public void Turn(double angle, AngleUnit unit) {
+        SetDesiredPosition(new Pose2D(DistanceUnit.MM, m_DesiredPosition.getX(DistanceUnit.MM), m_DesiredPosition.getY(DistanceUnit.MM), unit, m_DesiredPosition.getHeading(unit) + angle));
+    }
+
+    public static double angleWrap(double angle, AngleUnit unit) {
+        double radians = unit.toRadians(angle);
+
+        while (radians > Math.PI) {
+            radians -= 2 * Math.PI;
+        }
+        while (radians < -Math.PI) {
+            radians += 2 * Math.PI;
+        }
+        return unit.fromUnit(AngleUnit.RADIANS, radians);
+    }
+
+    private void Drive() {
+        double y = m_YPIDControl.pidControl(m_CurrentPosition.getY(DistanceUnit.INCH), m_DesiredPosition.getY(DistanceUnit.INCH));
+        double x = m_XPIDControl.pidControl(m_CurrentPosition.getX(DistanceUnit.INCH), m_DesiredPosition.getX(DistanceUnit.INCH));
+        double h = m_HPIDControl.pidControl(angleWrap(m_CurrentPosition.getHeading(AngleUnit.DEGREES), AngleUnit.DEGREES), m_DesiredPosition.getHeading(AngleUnit.DEGREES));
+
+        double cosine = Math.cos(m_CurrentPosition.getHeading(AngleUnit.RADIANS));
+        double sine = Math.sin(m_CurrentPosition.getHeading(AngleUnit.RADIANS));
+
+//        double yOutput = (y * cosine) - (x * sine);
+//        double xOutput = (y * sine) + (x * cosine);
+        double yOutput = (DriveConstants.COSY * y * cosine) + (DriveConstants.SINX * x * sine);
+        double xOutput = (DriveConstants.SINY * y * sine) + (DriveConstants.COSX * x * cosine);
+
+        m_Drive.Drive(yOutput, xOutput, h, m_MaxPower);
+
+        if (InBounds()) {
+            m_CurrentState = States.POSITIONED;
+        }
+        else {
+            m_CurrentState = States.DRIVING;
+        }
+    }
+
+    public boolean InPosition(){
+        return m_CurrentState == States.POSITIONED;
+    }
+
+    public boolean InBounds() {
+        boolean xInBounds = m_CurrentPosition.getX(DistanceUnit.MM) > (m_DesiredPosition.getX(DistanceUnit.MM) - m_XYToleranceMM) &&
+                m_CurrentPosition.getX(DistanceUnit.MM) < (m_DesiredPosition.getX(DistanceUnit.MM) + m_XYToleranceMM);
+        boolean yInBounds = m_CurrentPosition.getY(DistanceUnit.MM) > (m_DesiredPosition.getY(DistanceUnit.MM) - m_XYToleranceMM) &&
+                m_CurrentPosition.getY(DistanceUnit.MM) < (m_DesiredPosition.getY(DistanceUnit.MM) + m_XYToleranceMM);
+        boolean hInBounds = m_CurrentPosition.getHeading(AngleUnit.RADIANS) > (m_DesiredPosition.getHeading(AngleUnit.RADIANS) - m_HToleranceRadian) &&
+                m_CurrentPosition.getHeading(AngleUnit.RADIANS) < (m_DesiredPosition.getHeading(AngleUnit.RADIANS) + m_HToleranceRadian);
+
+        return xInBounds && yInBounds && hInBounds;
+    }
+
+    public boolean XInBounds() {
+        return m_CurrentPosition.getX(DistanceUnit.MM) > (m_DesiredPosition.getX(DistanceUnit.MM) - m_XYToleranceMM) &&
+                m_CurrentPosition.getX(DistanceUnit.MM) < (m_DesiredPosition.getX(DistanceUnit.MM) + m_XYToleranceMM);
+    }
+
+    public boolean YInBounds() {
+        return m_CurrentPosition.getY(DistanceUnit.MM) > (m_DesiredPosition.getY(DistanceUnit.MM) - m_XYToleranceMM) &&
+                m_CurrentPosition.getY(DistanceUnit.MM) < (m_DesiredPosition.getY(DistanceUnit.MM) + m_XYToleranceMM);
+    }
+
+    public boolean HInBounds() {
+        return m_CurrentPosition.getHeading(AngleUnit.RADIANS) > (m_DesiredPosition.getHeading(AngleUnit.RADIANS) - m_HToleranceRadian) &&
+                m_CurrentPosition.getHeading(AngleUnit.RADIANS) < (m_DesiredPosition.getHeading(AngleUnit.RADIANS) + m_HToleranceRadian);
     }
 }

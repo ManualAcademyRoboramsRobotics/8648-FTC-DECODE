@@ -4,50 +4,49 @@ import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+
 public class PIDController {
-    private ElapsedTime timer;
-    private double previousError;
+    final ElapsedTime m_Timer;
+    private double m_PreviousError, m_RunningIntegral;
+    private PIDCoefficients m_Coefficients;
 
-    private double kP;
-    private double kI;
-    private double kD;
+    public PIDController(PIDCoefficients coefficients) {
+        m_Coefficients = coefficients;
 
-    private double integral;
+        m_RunningIntegral = 0;
+        m_PreviousError = 0;
 
-    public PIDController(PIDCoefficients Coefficients) {
-        kP = Coefficients.p;
-        kI = Coefficients.i;
-        kD = Coefficients.d;
-
-        integral = 0;
-        previousError = 0;
-
-        timer = new ElapsedTime();
+        m_Timer = new ElapsedTime();
     }
 
-    public PIDController(PIDFCoefficients Coefficients) {
+    public void SetCoefficients(PIDCoefficients coefficients) {
+        m_Coefficients = coefficients;
+    }
 
+    public PIDCoefficients GetCoefficients() {
+        return m_Coefficients;
     }
 
     public double pidControl(double Current, double Desired) {
-        double elapsedTime = timer.time();
-        timer.reset();
+        double elapsedTime = m_Timer.time();
+        m_Timer.reset();
 
         double currentError = Desired - Current;
 
-        double p = kP * currentError;
-        double i = kI * (currentError * (elapsedTime));
-        integral += i;
+        double p = m_Coefficients.p * currentError;
+        double i = m_Coefficients.i * (currentError * (elapsedTime));
+        m_RunningIntegral += i;
 
         //    if i > max_i:
         //    i = max_i
         //    elif i < -max_i:
         //    i = -max_i
 
-        double d = kD * (currentError - previousError) / elapsedTime;
+        double d = m_Coefficients.d * (currentError - m_PreviousError) / elapsedTime;
 
-        previousError = currentError;
+        m_PreviousError = currentError;
 
-        return p + integral + d;
+        return p + m_RunningIntegral + d;
     }
 }

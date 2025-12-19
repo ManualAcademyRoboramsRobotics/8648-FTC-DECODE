@@ -1,18 +1,21 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.control;
 
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import android.service.controls.Control;
+
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.constants.ControlConstants;
 import org.firstinspires.ftc.teamcode.util.TaskCallbackTimer;
 
 import java.util.Timer;
 
-public abstract class DecodeControl extends OpMode {
+public class DecodeControl {
 
     //////////////////////////////////////////////////////////////
     // Constants
@@ -22,20 +25,12 @@ public abstract class DecodeControl extends OpMode {
 
     final long FEED_TIME_MS = 800; //The feeder servos run this long when a shot is requested.
 
-    final double  LAUNCHER_CLOSE_TARGET_VELOCITY = 1600;
-    final double LAUNCHER_FAR_TARGET_VELOCITY = 1800;
     final double ALLOWED_VELOCITY_DIVERSION = 100;
-
-    final double LEFT_POSITION = 0.348;
-//    final double LEFT_POSITION = 0.555;
-    final double RIGHT_POSITION = 0.310;
-//    final double RIGHT_POSITION = 0.08;
-
 
     //////////////////////////////////////////////////////////////
     // Enums
     //////////////////////////////////////////////////////////////
-    protected enum LaunchState {
+    public enum LaunchState {
         OFF,
         IDLE,
         SPIN_UP,
@@ -43,19 +38,19 @@ public abstract class DecodeControl extends OpMode {
         LAUNCHING,
     }
 
-    protected enum IntakeState {
+    public enum IntakeState {
         ON,
-        OFF;
+        OFF
     }
 
-    protected enum DiverterDirection {
+    public enum DiverterDirection {
         LEFT,
-        RIGHT;
+        RIGHT
     }
 
-    protected enum LauncherDistance {
+    public enum LauncherDistance {
         CLOSE,
-        FAR;
+        FAR
     }
 
     //////////////////////////////////////////////////////////////
@@ -63,41 +58,22 @@ public abstract class DecodeControl extends OpMode {
     //////////////////////////////////////////////////////////////
 
     // Control Components
-    protected DcMotorEx leftFrontDrive = null;
-    protected DcMotorEx leftBackDrive = null;
-    protected DcMotorEx rightFrontDrive = null;
-    protected DcMotorEx rightBackDrive = null;
-    protected DcMotorEx intake = null;
-    protected DcMotorEx leftLauncher = null;
-    protected DcMotorEx rightLauncher = null;
-    protected CRServo leftFeeder = null;
-    protected CRServo rightFeeder = null;
-    protected Servo diverter = null;
-
+    final DcMotorEx intake, leftLauncher, rightLauncher;
+    final CRServo leftFeeder, rightFeeder;
+    final Servo diverter;
 
     // Control Objects
-    protected MecanumDrive mecanumDrive = null;
-    protected Timer feederTimer = null;
-    protected PIDFCoefficients feederPIDFCoefficients = null;
-
+    final Timer feederTimer;
+    final PIDFCoefficients launcherfeederPIDFCoefficients = new PIDFCoefficients(ControlConstants.LAUNCHER_KP, ControlConstants.LAUNCHER_KI, ControlConstants.LAUNCHER_KD, ControlConstants.LAUNCHER_KF);
 
     // State Variables
-    protected LaunchState leftLauncherState = LaunchState.OFF;
-    protected LaunchState rightLauncherState = LaunchState.OFF;
-    protected DiverterDirection diverterDirection = DiverterDirection.RIGHT;
-    protected IntakeState intakeState = IntakeState.OFF;
-    protected LauncherDistance launcherDistance = LauncherDistance.CLOSE;
-    protected double launcherVelocity = LAUNCHER_CLOSE_TARGET_VELOCITY;
+    public LaunchState leftLauncherState = LaunchState.OFF, rightLauncherState = LaunchState.OFF;
+    public DiverterDirection diverterDirection = DiverterDirection.LEFT;
+    public IntakeState intakeState = IntakeState.OFF;
+    public LauncherDistance launcherDistance = LauncherDistance.CLOSE;
+    public double launcherVelocity = ControlConstants.CLOSE_LAUNCH_SPEED;
 
-
-    @Override
-    public void init() {
-        feederPIDFCoefficients = new PIDFCoefficients(300, 0, 0, 10);
-
-        leftFrontDrive = hardwareMap.get(DcMotorEx.class, "lfd");
-        leftBackDrive = hardwareMap.get(DcMotorEx.class, "lbd");
-        rightFrontDrive = hardwareMap.get(DcMotorEx.class, "rfd");
-        rightBackDrive = hardwareMap.get(DcMotorEx.class, "rbd");
+    public DecodeControl(HardwareMap hardwareMap) {
         leftLauncher = hardwareMap.get(DcMotorEx.class, "ll");
         rightLauncher = hardwareMap.get(DcMotorEx.class, "rl");
         intake = hardwareMap.get(DcMotorEx.class, "i");
@@ -105,76 +81,62 @@ public abstract class DecodeControl extends OpMode {
         rightFeeder = hardwareMap.get(CRServo.class, "rf");
         diverter = hardwareMap.get(Servo.class, "d");
 
-        leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftLauncher.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightLauncher.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        //Initial Directions 8648
-        leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-        leftBackDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
-        leftLauncher.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightLauncher.setDirection(DcMotorSimple.Direction.REVERSE);
-        intake.setDirection(DcMotorSimple.Direction.REVERSE);
-
-        //Initial Directions 9788
-//        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
-//        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
-//        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-//        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
-//        leftLauncher.setDirection(DcMotorSimple.Direction.REVERSE);
-//        rightLauncher.setDirection(DcMotorSimple.Direction.FORWARD);
-//        intake.setDirection(DcMotorSimple.Direction.FORWARD);
-
+        //Initial Directions
+        /////////////////////////////////////////////////////////////////////////////////////////////////
+        // 9788!!!!!
+        intake.setDirection(DcMotorSimple.Direction.FORWARD);
+        leftLauncher.setDirection(DcMotorSimple.Direction.REVERSE);
+        rightLauncher.setDirection(DcMotorSimple.Direction.FORWARD);
+        // 8648!!!!!
+//        leftLauncher.setDirection(DcMotorSimple.Direction.FORWARD);
+//        rightLauncher.setDirection(DcMotorSimple.Direction.REVERSE);
+//        intake.setDirection(DcMotorSimple.Direction.REVERSE);
+        /////////////////////////////////////////////////////////////////////////////////////////////////
         leftLauncher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightLauncher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        leftLauncher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, feederPIDFCoefficients);
-        rightLauncher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, feederPIDFCoefficients);
+        leftLauncher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, launcherfeederPIDFCoefficients);
+        rightLauncher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, launcherfeederPIDFCoefficients);
 
         leftFeeder.setDirection(DcMotorSimple.Direction.REVERSE);
         rightFeeder.setDirection(DcMotorSimple.Direction.FORWARD);
         leftFeeder.setPower(STOP_SPEED);
         rightFeeder.setPower(STOP_SPEED);
 
-        diverter.setPosition(RIGHT_POSITION);
+        diverter.setPosition(ControlConstants.DIVERTER_LEFT);
 
         // Set up timer tasks so we don't forget to turn off the feeder
         feederTimer = new Timer();
-
-        // Initialize mecanum drive
-        mecanumDrive = new MecanumDrive(leftFrontDrive, leftBackDrive, rightFrontDrive, rightBackDrive);
     }
 
-    protected void launcherSpinUp() {
+    public void launcherSpinUp() {
         leftLauncherState = LaunchState.IDLE;
         rightLauncherState = LaunchState.IDLE;
         leftLauncher.setVelocity(launcherVelocity);
         rightLauncher.setVelocity(launcherVelocity);
     }
 
-    protected void launcherStop() {
+    public void launcherStop() {
         leftLauncherState = LaunchState.OFF;
         rightLauncherState = LaunchState.OFF;
         leftLauncher.setVelocity(STOP_SPEED);
         rightLauncher.setVelocity(STOP_SPEED);
     }
 
-    protected void diverterLeft() {
+    public void diverterLeft() {
         diverterDirection = DiverterDirection.LEFT;
-        diverter.setPosition(LEFT_POSITION);
+        diverter.setPosition(ControlConstants.DIVERTER_LEFT);
     }
 
-    protected void diverterRight() {
+    public void diverterRight() {
         diverterDirection = DiverterDirection.RIGHT;
-        diverter.setPosition(RIGHT_POSITION);
+        diverter.setPosition(ControlConstants.DIVERTER_RIGHT);
     }
 
-    protected void diverterDirectionToggle() {
+    public void diverterDirectionToggle() {
         switch (diverterDirection){
             case LEFT:
                 diverterRight();
@@ -185,17 +147,17 @@ public abstract class DecodeControl extends OpMode {
         }
     }
 
-    protected void intakeOn() {
+    public void intakeOn() {
         intakeState = IntakeState.ON;
         intake.setPower(1);
     }
 
-    protected void intakeOff(){
+    public void intakeOff(){
         intakeState = IntakeState.OFF;
         intake.setPower(0);
     }
 
-    protected void intakeStateToggle() {
+    public void intakeStateToggle() {
         switch (intakeState){
             case ON:
                 intakeOff();
@@ -206,26 +168,34 @@ public abstract class DecodeControl extends OpMode {
         }
     }
 
-    protected void launcherVelocityToggle() {
+    public void launcherVelocityToggle() {
         switch (launcherDistance) {
             case CLOSE:
                 launcherDistance = LauncherDistance.FAR;
-                setLauncherVelocity(LAUNCHER_FAR_TARGET_VELOCITY);
+                setLauncherVelocity(ControlConstants.FAR_LAUNCH_SPEED);
                 break;
             case FAR:
                 launcherDistance = LauncherDistance.CLOSE;
-                setLauncherVelocity(LAUNCHER_CLOSE_TARGET_VELOCITY);
+                setLauncherVelocity(ControlConstants.CLOSE_LAUNCH_SPEED);
                 break;
         }
     }
 
-    protected void setLauncherVelocity(double velocity) {
+    public void setLauncherVelocity(double velocity) {
         launcherVelocity = velocity;
         if (leftLauncherState != LaunchState.OFF || rightLauncherState != LaunchState.OFF )
         {
             leftLauncher.setVelocity(launcherVelocity);
             rightLauncher.setVelocity(launcherVelocity);
         }
+    }
+
+    public double GetLeftLauncherVelocity(){
+        return leftLauncher.getVelocity();
+    }
+
+    public double GetRightLauncherVelocity(){
+        return rightLauncher.getVelocity();
     }
 
     private void leftLauncherStartFeed() {
@@ -250,7 +220,7 @@ public abstract class DecodeControl extends OpMode {
         rightLauncherState = LaunchState.IDLE;
     }
 
-    void launchLeft(boolean shotRequested) {
+    public void launchLeft(boolean shotRequested) {
         switch (leftLauncherState) {
             case OFF:
             case IDLE:
@@ -260,7 +230,6 @@ public abstract class DecodeControl extends OpMode {
                 }
                 break;
             case SPIN_UP:
-                launcherSpinUp();
                 if (Math.abs(leftLauncher.getVelocity()) > (launcherVelocity - ALLOWED_VELOCITY_DIVERSION)) {
                     leftLauncherState = LaunchState.LAUNCH;
                 }
@@ -271,7 +240,7 @@ public abstract class DecodeControl extends OpMode {
         }
     }
 
-    void launchRight(boolean shotRequested) {
+    public void launchRight(boolean shotRequested) {
         switch (rightLauncherState) {
             case OFF:
             case IDLE:

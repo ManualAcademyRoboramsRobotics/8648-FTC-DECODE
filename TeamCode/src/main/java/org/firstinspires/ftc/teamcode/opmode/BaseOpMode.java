@@ -42,19 +42,10 @@ public abstract class BaseOpMode extends OpMode {
         m_RightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         //Initial Directions
-        /////////////////////////////////////////////////////////////////////////////////////////////////
-        // 9788!!!!!
-        m_LeftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
-        m_LeftBackDrive.setDirection(DcMotor.Direction.REVERSE);
-        m_RightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-        m_RightBackDrive.setDirection(DcMotor.Direction.FORWARD);
-
-        // 8648!!!!!
-//        m_LeftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-//        m_LeftBackDrive.setDirection(DcMotor.Direction.FORWARD);
-//        m_RightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
-//        m_RightBackDrive.setDirection(DcMotor.Direction.REVERSE);
-        /////////////////////////////////////////////////////////////////////////////////////////////////
+        m_LeftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
+        m_LeftBackDrive.setDirection(DcMotor.Direction.FORWARD);
+        m_RightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        m_RightBackDrive.setDirection(DcMotor.Direction.REVERSE);
 
         m_MecanumDrive = new MecanumDrive(m_LeftFrontDrive, m_LeftBackDrive, m_RightFrontDrive, m_RightBackDrive);
 

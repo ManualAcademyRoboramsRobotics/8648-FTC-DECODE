@@ -10,8 +10,8 @@ public class ControlConstants {
     public static double LAUNCHER_KD = 0;
     public static double LAUNCHER_KF = 10;
 
-    public static double DIVERTER_RIGHT = 0.295;
-    public static double DIVERTER_LEFT = 0.355;
+    public static double DIVERTER_RIGHT = 0.4;
+    public static double DIVERTER_LEFT = 0.64;
 
     public static double CLOSE_LAUNCH_SPEED = 1300;
     public static double FAR_LAUNCH_SPEED = 1700;

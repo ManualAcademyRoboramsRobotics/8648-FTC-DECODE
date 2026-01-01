@@ -72,14 +72,23 @@ public abstract class BaseDecodeAutonomous extends BaseOpMode {
 
         switch (m_CurrentState) {
             case IDLE:
+                // Move to the Go to Launch Position state as soon as start is pressed
                 m_CurrentState = State.GO_TO_LAUNCH_POSITION;
                 break;
             case GO_TO_LAUNCH_POSITION:
+                // Reset localizer to full power
+                m_Localizer.SetMaxPower(1);
+                // Move to the launch position on the field
                 m_Localizer.SetDesiredPosition(m_LaunchPosition);
+                // Start up launcher wheel so it is up to speed when we get to position
                 m_Controls.launcherSpinUp();
+                // Check if we are in position to move to the next state
                 if (m_Localizer.InPosition()){
+                    // Move to the Launch Artifacts State
                     m_CurrentState = State.LAUNCH_ARTIFACTS;
+                    // Reset artifact index for launching
                     m_ArtifactIndex = Artifact.ARTIFACT1;
+                    // Reset shot request tracking for launching
                     m_RequestShot = true;
                 }
                 break;
@@ -120,6 +129,7 @@ public abstract class BaseDecodeAutonomous extends BaseOpMode {
                 }
                 break;
             case GO_TO_SPIKE_POSITION:
+                m_Localizer.SetMaxPower(1);
                 switch (m_SpikeIndex) {
                     case SPIKE1:
                         m_Localizer.SetDesiredPosition(m_Spike1Position);
@@ -143,6 +153,15 @@ public abstract class BaseDecodeAutonomous extends BaseOpMode {
                 }
                 break;
             case INTAKE_SPIKE:
+                // Here are some options for slowing down the intake try several to see what works
+                // NOTE: Power is not linear, 0.5 is half power, but may not be half speed
+                // battery voltage will affect this as well. Additionally, If the power is too low, the localizer may struggle
+                // to get into position and may not allow the robot to move to the next state/artifact.
+                // Feel free to try your own to experiment!!!!
+                //m_Localizer.SetMaxPower(0.5);
+                m_Localizer.SetMaxPower(0.75);
+                //m_Localizer.SetMaxPower(0.8);
+
                 switch (m_ArtifactIndex) {
                     case ARTIFACT1:
                         if (m_IntakeArtifact) {
@@ -180,6 +199,7 @@ public abstract class BaseDecodeAutonomous extends BaseOpMode {
                 }
                 break;
             case GO_TO_GATE_POSITION:
+                m_Localizer.SetMaxPower(1);
                 m_Localizer.SetDesiredPosition(m_OpenGatePosition);
                 if (m_Localizer.InPosition()){
                     m_CurrentState = State.OPEN_GATE;

@@ -15,7 +15,7 @@ public class DecodeAutonomousBlueClose extends BaseDecodeAutonomous {
     public void init() {
         m_StartingPosition = new Pose2D(DistanceUnit.INCH, -48, 52, AngleUnit.DEGREES, 125);
 
-        m_LaunchPosition = new Pose2D(DistanceUnit.INCH, -13.35, 11.80, AngleUnit.DEGREES, -45);
+        m_LaunchPosition = new Pose2D(DistanceUnit.INCH, -13.35, 11.80, AngleUnit.DEGREES, -44.8);
         m_Spike1Position = new Pose2D(DistanceUnit.INCH, -29, 11.00, AngleUnit.DEGREES, -90);
         m_Spike2Position = new Pose2D(DistanceUnit.INCH, -29, -15.00, AngleUnit.DEGREES, -90);
         m_Spike3Position = new Pose2D(DistanceUnit.INCH, -29, -38.00, AngleUnit.DEGREES, -90);
@@ -24,6 +24,7 @@ public class DecodeAutonomousBlueClose extends BaseDecodeAutonomous {
         m_ArtifactLengthIN = -5.00;
         m_GateForwardDistanceIN = 0;
         m_launchVelocity = ControlConstants.CLOSE_LAUNCH_SPEED;
+        ControlConstants.CURRENT_ALLIANCE = ControlConstants.Alliance.BLUE;
 
         super.init();
     }

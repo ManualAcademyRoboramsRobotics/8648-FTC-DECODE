@@ -53,8 +53,6 @@ public abstract class BaseOpMode extends OpMode {
         m_Pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         m_Pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
         m_Pinpoint.setOffsets(DriveConstants.ODOMETERY_Y_OFFSET, DriveConstants.ODOMETERY_X_OFFSET, DistanceUnit.INCH);
-        m_Pinpoint.recalibrateIMU();
-        m_Pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, m_StartingPosition.getY(DistanceUnit.INCH), -m_StartingPosition.getX(DistanceUnit.INCH), AngleUnit.DEGREES, -m_StartingPosition.getHeading(AngleUnit.DEGREES)));
 
         m_Localizer = new Localizer(m_MecanumDrive, DriveConstants.XY_LOCALIZER_TOLERANCE_IN, DistanceUnit.INCH, DriveConstants.H_LOCALIZER_TOLERANCE_DEGREE, AngleUnit.DEGREES, XYCoefficients, XYCoefficients, HCoefficients );
     }

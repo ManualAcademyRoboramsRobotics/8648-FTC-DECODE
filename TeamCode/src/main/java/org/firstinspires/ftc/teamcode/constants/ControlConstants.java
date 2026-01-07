@@ -15,4 +15,19 @@ public class ControlConstants {
 
     public static double CLOSE_LAUNCH_SPEED = 1300;
     public static double FAR_LAUNCH_SPEED = 1700;
+
+    public static double BLUE_GOAL_X = -70;
+    public static double BLUE_GOAL_Y = 70;
+    public static double RED_GOAL_X = 70;
+    public static double RED_GOAL_Y = 70;
+
+    public static double STICK_THRESHOLD = 0.05;
+
+    public enum Alliance
+    {
+        RED,
+        BLUE
+    }
+    public static Alliance CURRENT_ALLIANCE = Alliance.RED;
+
 }

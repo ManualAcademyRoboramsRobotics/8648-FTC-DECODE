@@ -61,6 +61,9 @@ public abstract class BaseDecodeAutonomous extends BaseOpMode {
         m_ArtifactIndex = Artifact.ARTIFACT1;
         m_SpikeIndex = Spike.SPIKE1;
         super.init();
+
+        m_Pinpoint.recalibrateIMU();
+        m_Pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, m_StartingPosition.getY(DistanceUnit.INCH), -m_StartingPosition.getX(DistanceUnit.INCH), AngleUnit.DEGREES, -m_StartingPosition.getHeading(AngleUnit.DEGREES)));
     }
 
     @Override

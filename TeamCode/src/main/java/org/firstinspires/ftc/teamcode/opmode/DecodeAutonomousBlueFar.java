@@ -23,7 +23,7 @@ public class DecodeAutonomousBlueFar extends BaseDecodeAutonomous {
 
         m_ArtifactLengthIN = -5.00;
         m_GateForwardDistanceIN = 0;
-        m_launchVelocity = ControlConstants.CLOSE_LAUNCH_SPEED;
+        m_launchVelocity = ControlConstants.FAR_LAUNCH_SPEED;
 
         super.init();
     }

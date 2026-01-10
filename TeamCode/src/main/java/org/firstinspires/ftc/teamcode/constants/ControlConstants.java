@@ -6,7 +6,6 @@ import com.acmerobotics.dashboard.config.Config;
 public class ControlConstants {
     //http://192.168.43.1:8080/dash
 
-
     //////////////////////////////////////////////////////////////
     // Constants
     //////////////////////////////////////////////////////////////
@@ -16,7 +15,6 @@ public class ControlConstants {
     public static double LAUNCHER_BACKFEED_SPEED = -0.75;
     public static long FEED_TIME_MS = 800; //The feeder servos run this long when a shot is requested.
     public static long BACKFEED_TIME_MS = 650; //The feeder servos run this long when a shot is requested.
-
 
     public static double ALLOWED_VELOCITY_DIVERSION = 100;
 

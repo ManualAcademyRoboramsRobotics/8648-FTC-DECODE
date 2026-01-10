@@ -18,16 +18,6 @@ import java.util.Timer;
 public class DecodeControl {
 
     //////////////////////////////////////////////////////////////
-    // Constants
-    //////////////////////////////////////////////////////////////
-    final double STOP_SPEED = 0.0; //We send this power to the servos when we want them to stop.
-    final double FULL_SPEED = 1.0;
-
-    final long FEED_TIME_MS = 800; //The feeder servos run this long when a shot is requested.
-
-    final double ALLOWED_VELOCITY_DIVERSION = 100;
-
-    //////////////////////////////////////////////////////////////
     // Enums
     //////////////////////////////////////////////////////////////
     public enum LaunchState {
@@ -97,8 +87,8 @@ public class DecodeControl {
 
         leftFeeder.setDirection(DcMotorSimple.Direction.REVERSE);
         rightFeeder.setDirection(DcMotorSimple.Direction.FORWARD);
-        leftFeeder.setPower(STOP_SPEED);
-        rightFeeder.setPower(STOP_SPEED);
+        leftFeeder.setPower(ControlConstants.FEEDER_STOP_SPEED);
+    rightFeeder.setPower(ControlConstants.FEEDER_STOP_SPEED);
 
         diverter.setPosition(ControlConstants.DIVERTER_LEFT);
 
@@ -109,15 +99,22 @@ public class DecodeControl {
     public void launcherSpinUp() {
         leftLauncherState = LaunchState.IDLE;
         rightLauncherState = LaunchState.IDLE;
-        leftLauncher.setVelocity(launcherVelocity);
-        rightLauncher.setVelocity(launcherVelocity);
+        if (GetLeftLauncherVelocity() == 0 || GetRightLauncherVelocity() == 0)
+        {
+            LauncherStartupBackFeedStart();
+            feederTimer.schedule(new TaskCallbackTimer(this::LauncherStartupBackFeedStop), ControlConstants.BACKFEED_TIME_MS);
+        }
+        else {
+            leftLauncher.setVelocity(launcherVelocity);
+            rightLauncher.setVelocity(launcherVelocity);
+        }
     }
 
     public void launcherStop() {
         leftLauncherState = LaunchState.OFF;
         rightLauncherState = LaunchState.OFF;
-        leftLauncher.setVelocity(STOP_SPEED);
-        rightLauncher.setVelocity(STOP_SPEED);
+        leftLauncher.setVelocity(ControlConstants.FEEDER_STOP_SPEED);
+        rightLauncher.setVelocity(ControlConstants.FEEDER_STOP_SPEED);
     }
 
     public void diverterLeft() {
@@ -193,25 +190,39 @@ public class DecodeControl {
     }
 
     private void leftLauncherStartFeed() {
-        leftFeeder.setPower(FULL_SPEED);
+        leftFeeder.setPower(ControlConstants.FEEDER_FULL_SPEED);
         leftLauncherState = LaunchState.LAUNCHING;
-        feederTimer.schedule(new TaskCallbackTimer(this::leftLauncherFinishFeed), FEED_TIME_MS);
+        feederTimer.schedule(new TaskCallbackTimer(this::leftLauncherFinishFeed), ControlConstants.FEED_TIME_MS);
     }
 
     private void leftLauncherFinishFeed() {
-        leftFeeder.setPower(STOP_SPEED);
+        leftFeeder.setPower(ControlConstants.FEEDER_STOP_SPEED);
         leftLauncherState = LaunchState.IDLE;
     }
 
     private void rightLauncherStartFeed() {
-        rightFeeder.setPower(FULL_SPEED);
+        rightFeeder.setPower(ControlConstants.FEEDER_FULL_SPEED);
         rightLauncherState = LaunchState.LAUNCHING;
-        feederTimer.schedule(new TaskCallbackTimer(this::rightLauncherFinishFeed), FEED_TIME_MS);
+        feederTimer.schedule(new TaskCallbackTimer(this::rightLauncherFinishFeed), ControlConstants.FEED_TIME_MS);
     }
 
     private void rightLauncherFinishFeed() {
-        rightFeeder.setPower(STOP_SPEED);
+        rightFeeder.setPower(ControlConstants.FEEDER_STOP_SPEED);
         rightLauncherState = LaunchState.IDLE;
+    }
+
+    private void LauncherStartupBackFeedStart() {
+        rightFeeder.setPower(ControlConstants.FEEDER_BACKFEED_SPEED);
+        leftFeeder.setPower(ControlConstants.FEEDER_BACKFEED_SPEED);
+        rightLauncher.setPower(ControlConstants.LAUNCHER_BACKFEED_SPEED);
+        leftLauncher.setPower(ControlConstants.LAUNCHER_BACKFEED_SPEED);
+    }
+
+    private void LauncherStartupBackFeedStop() {
+        rightFeeder.setPower(ControlConstants.FEEDER_STOP_SPEED);
+        leftFeeder.setPower(ControlConstants.FEEDER_STOP_SPEED);
+        leftLauncher.setVelocity(launcherVelocity);
+        rightLauncher.setVelocity(launcherVelocity);
     }
 
     public void launchLeft(boolean shotRequested) {
@@ -224,7 +235,7 @@ public class DecodeControl {
                 }
                 break;
             case SPIN_UP:
-                if (Math.abs(leftLauncher.getVelocity()) > (launcherVelocity - ALLOWED_VELOCITY_DIVERSION)) {
+                if (Math.abs(leftLauncher.getVelocity()) > (launcherVelocity - ControlConstants.ALLOWED_VELOCITY_DIVERSION)) {
                     leftLauncherState = LaunchState.LAUNCH;
                 }
                 break;
@@ -244,7 +255,7 @@ public class DecodeControl {
                 }
                 break;
             case SPIN_UP:
-                if (Math.abs(rightLauncher.getVelocity()) > (launcherVelocity - ALLOWED_VELOCITY_DIVERSION)) {
+                if (Math.abs(rightLauncher.getVelocity()) > (launcherVelocity - ControlConstants.ALLOWED_VELOCITY_DIVERSION)) {
                     rightLauncherState = LaunchState.LAUNCH;
                 }
                 break;

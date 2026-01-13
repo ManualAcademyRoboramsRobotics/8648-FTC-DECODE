@@ -88,7 +88,7 @@ public class DecodeControl {
         leftFeeder.setDirection(DcMotorSimple.Direction.REVERSE);
         rightFeeder.setDirection(DcMotorSimple.Direction.FORWARD);
         leftFeeder.setPower(ControlConstants.FEEDER_STOP_SPEED);
-    rightFeeder.setPower(ControlConstants.FEEDER_STOP_SPEED);
+        rightFeeder.setPower(ControlConstants.FEEDER_STOP_SPEED);
 
         diverter.setPosition(ControlConstants.DIVERTER_LEFT);
 
@@ -99,7 +99,7 @@ public class DecodeControl {
     public void launcherSpinUp() {
         leftLauncherState = LaunchState.IDLE;
         rightLauncherState = LaunchState.IDLE;
-        if (GetLeftLauncherVelocity() == 0 || GetRightLauncherVelocity() == 0)
+        if (GetLeftLauncherVelocity() < 1 || GetRightLauncherVelocity() < 1)
         {
             LauncherStartupBackFeedStart();
             feederTimer.schedule(new TaskCallbackTimer(this::LauncherStartupBackFeedStop), ControlConstants.BACKFEED_TIME_MS);

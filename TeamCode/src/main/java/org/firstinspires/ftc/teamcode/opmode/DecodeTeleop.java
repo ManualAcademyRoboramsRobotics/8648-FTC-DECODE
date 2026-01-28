@@ -25,6 +25,7 @@ public class DecodeTeleop extends BaseOpMode {
      */
     @Override
     public void init() {
+        m_InitializeOdometery = false;
         super.init();
         m_Controls = new DecodeControl(hardwareMap);
         telemetry.addData("Status", "Initialized");

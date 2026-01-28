@@ -70,9 +70,6 @@ public abstract class BaseDecodeAutonomous extends BaseOpMode {
         m_ArtifactIndex = Artifact.ARTIFACT1;
         m_SpikeIndex = Spike.SPIKE1;
         super.init();
-
-        m_Pinpoint.recalibrateIMU();
-        m_Pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, m_StartingPosition.getY(DistanceUnit.INCH), -m_StartingPosition.getX(DistanceUnit.INCH), AngleUnit.DEGREES, -m_StartingPosition.getHeading(AngleUnit.DEGREES)));
     }
 
     @Override
@@ -102,24 +99,25 @@ public abstract class BaseDecodeAutonomous extends BaseOpMode {
                     m_Controls.intakeOn();
                     switch (m_ArtifactIndex) {
                         case ARTIFACT1:
+                            m_Controls.diverterRight();
                             m_Controls.launchLeft(m_RequestShot);
                             m_RequestShot = false;
                             if (m_Controls.leftLauncherState == DecodeControl.LaunchState.IDLE) {
                                 m_ArtifactIndex = Artifact.ARTIFACT2;
-                                m_Controls.diverterLeft();
                                 m_RequestShot = true;
                             }
                             break;
                         case ARTIFACT2:
+                            m_Controls.diverterLeft();
                             m_Controls.launchRight(m_RequestShot);
                             m_RequestShot = false;
                             if (m_Controls.rightLauncherState == DecodeControl.LaunchState.IDLE) {
                                 m_ArtifactIndex = Artifact.ARTIFACT3;
-                                m_Controls.diverterRight();
                                 m_RequestShot = true;
                             }
                             break;
                         case ARTIFACT3:
+                            m_Controls.diverterRight();
                             m_Controls.launchLeft(m_RequestShot);
                             m_RequestShot = false;
                             if (m_Controls.leftLauncherState == DecodeControl.LaunchState.IDLE) {
@@ -128,7 +126,6 @@ public abstract class BaseDecodeAutonomous extends BaseOpMode {
                                     m_CurrentState = State.GO_TO_GATE_POSITION;
                                 } else {
                                     m_CurrentState = State.GO_TO_SPIKE_POSITION;
-                                    //m_Localizer.SetMaxPower(DriveConstants.SLOW_SPEED);
                                 }
                             }
                             break;
@@ -171,13 +168,12 @@ public abstract class BaseDecodeAutonomous extends BaseOpMode {
                             }
                             if (m_Localizer.InPosition()) {
                                 m_IntakeArtifact = true;
-                                m_ArtifactIndex = Artifact.ARTIFACT2;
+                                m_ArtifactIndex = Artifact.ARTIFACT3;
                             }
                             break;
                         case ARTIFACT2:
                             if (m_IntakeArtifact) {
-                                m_Controls.diverterRight();
-                                Delay(AutoConstants.DIVERTER_DELAY);
+                                Delay((AutoConstants.DIVERTER_DELAY));
                                 m_Localizer.MoveX(m_ArtifactLengthIN, DistanceUnit.INCH);
                                 m_IntakeArtifact = false;
                             }
@@ -188,7 +184,7 @@ public abstract class BaseDecodeAutonomous extends BaseOpMode {
                             break;
                         case ARTIFACT3:
                             if (m_IntakeArtifact) {
-                                m_Controls.diverterLeft();
+                                m_Controls.diverterRight();
                                 Delay(AutoConstants.DIVERTER_DELAY);
                                 m_Localizer.MoveX(m_ArtifactLengthIN, DistanceUnit.INCH);
                                 m_IntakeArtifact = false;

@@ -24,6 +24,7 @@ public abstract class BaseOpMode extends OpMode {
     protected GoBildaPinpointDriver m_Pinpoint;
     protected Localizer m_Localizer;
     public Pose2D m_StartingPosition = new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, 0);
+    public boolean m_InitializeOdometery = true;
 
     final PIDCoefficients XYCoefficients = new PIDCoefficients(DriveConstants.XY_KP, DriveConstants.XY_KI, DriveConstants.XY_KD);
     final PIDCoefficients HCoefficients = new PIDCoefficients(DriveConstants.H_KP, DriveConstants.H_KI, DriveConstants.H_KD);
@@ -53,6 +54,11 @@ public abstract class BaseOpMode extends OpMode {
         m_Pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         m_Pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
         m_Pinpoint.setOffsets(DriveConstants.ODOMETERY_Y_OFFSET, DriveConstants.ODOMETERY_X_OFFSET, DistanceUnit.INCH);
+        if (m_InitializeOdometery){
+            m_Pinpoint.recalibrateIMU();
+            m_Pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, m_StartingPosition.getY(DistanceUnit.INCH), -m_StartingPosition.getX(DistanceUnit.INCH), AngleUnit.DEGREES, -m_StartingPosition.getHeading(AngleUnit.DEGREES)));
+        }
+
 
         m_Localizer = new Localizer(m_MecanumDrive, DriveConstants.XY_LOCALIZER_TOLERANCE_IN, DistanceUnit.INCH, DriveConstants.H_LOCALIZER_TOLERANCE_DEGREE, AngleUnit.DEGREES, XYCoefficients, XYCoefficients, HCoefficients );
     }
